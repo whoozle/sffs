@@ -64,11 +64,7 @@ static int sffs_write_at(struct sffs *fs, off_t offset, const void *data, size_t
 	return 0;
 }
 
-static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uint32_t size, const char *fname, uint8_t padding) {
-	size_t fname_len = strlen(fname);
-	if (fname_len == 0 || fname_len >= 255)
-		return -1;
-	
+static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uint32_t size, uint8_t fname_len, uint8_t padding) {
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
 		return -1;
 
@@ -77,13 +73,8 @@ static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uin
 		return -1;
 	
 	int header_offset = (header[0] & 0x80)? 5: 0;
-	int committed = header[header_offset] & 0x40;
-	if (committed) {
-		fprintf(stderr, "cannot overwrite committed metadata\n!");
-		return -1;
-	}
 	header_offset = 5 - header_offset;
-	header[header_offset] |= 0x40; /*flag as committed*/
+	header[header_offset] = flags;
 	*((uint32_t *)&header[header_offset + 1]) = htole32(size + padding); //internal block size
 	
 	if (sffs_write_at(fs, offset + header_offset, header + header_offset, 5) == -1)
@@ -93,14 +84,11 @@ static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uin
 	uint8_t header2[4 + 1 + 1]; /*timestamp + padding + filename len*/
 	*((uint32_t *)header2) = htole32(time(0));
 	header2[4] = padding;
-	header2[5] = (uint8_t)fname_len;
+	header2[5] = fname_len;
 
 	if (sffs_write_at(fs, offset + 10, header2, 6) == -1)
 		return -1;
 
-	if (fs->write(fname, fname_len) != fname_len)
-		return -1;
-	
 	return 0;
 }
 
@@ -139,6 +127,7 @@ static int sffs_find_file(struct sffs *fs, const char *fname) {
 }
 
 ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t size) {
+	size_t fname_len = strlen(fname);
 	int pos = sffs_find_file(fs, fname);
 	if (pos < 0) {
 		struct sffs_entry *file;
@@ -150,7 +139,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 			return -1;
 		}
 		file->name = strdup(fname);
-		size_t header_size = strlen(fname) + 16; /* 2 * (flags + size) + mtime + padding + fname len + filename */
+		size_t header_size = fname_len + 16; /* 2 * (flags + size) + mtime + padding + fname len + filename */
 		size_t full_size = size + header_size;
 		struct sffs_block *free_begin = (struct sffs_block *)fs->free.ptr;
 		struct sffs_block *free_end = (struct sffs_block *)(fs->free.ptr + fs->free.size);
@@ -174,14 +163,18 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 			off_t offset = best_free->begin;
 			printf("SFFS: too large, splitting, writing new free-block header\n");
 			/*mark up empty block inside*/
-			if (sffs_write_empty_header(fs, offset + full_size, tail_size) == -1)
+			best_free->begin = offset + full_size;
+			if (sffs_write_empty_header(fs, best_free->begin, tail_size) == -1)
 				return -1;
 			//return 0;
 			/*writing data*/
 			if (sffs_write_at(fs, offset + header_size, data, size) == -1)
 				return -1;
 			/*writing metadata*/
-			if (sffs_write_metadata(fs, offset, 0x40, size + strlen(fname), fname, 0) == -1)
+			if (sffs_write_metadata(fs, offset, 0x40, size + fname_len, fname_len, 0) == -1)
+				return -1;
+			/*write filename*/
+			if (fs->write(fname, fname_len) != fname_len)
 				return -1;
 			/*commit*/
 			if (sffs_commit_metadata(fs, offset) == -1)
@@ -206,6 +199,19 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 		return -1;
 	return fs->read(data, size);
 }
+
+int sffs_unlink(struct sffs *fs, const char *fname) {
+	int pos = sffs_find_file(fs, fname);
+	if (pos < 0)
+		return -1;
+
+	struct sffs_entry *file = ((struct sffs_entry *)fs->files.ptr) + pos;
+	sffs_write_metadata(fs, file->block.begin, 0, file->block.end - file->block.begin - 16, 0, 0);
+	sffs_commit_metadata(fs, file->block.begin);
+	//fixme: insert into free blocks!
+	return 0;
+}
+
 
 int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf) {
 	int pos = sffs_find_file(fs, fname);

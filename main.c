@@ -150,6 +150,20 @@ int main(int argc, char **argv) {
 			free(src);
 		}
 		sffs_umount(&fs);
+	} else if (strcmp(argv[1], "remove") == 0) {
+		int f;
+		if (argc < 4) {
+			printf("usage: remove imagefile file\n");
+			return 0;
+		}
+		if (mount_image(&fs, argv[2]) == -1)
+			return 2;
+
+		for(f = 3; f < argc; ++f) {
+			sffs_unlink(&fs, argv[f]);
+		}
+
+		sffs_umount(&fs);
 	} else {
 		printf("unknown command: %s\n", argv[1]);
 	}

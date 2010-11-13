@@ -43,6 +43,7 @@ int sffs_umount(struct sffs *fs);
 
 ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t size);
 ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size);
+int sffs_unlink(struct sffs *fs, const char *fname);
 int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf);
 
 #endif
