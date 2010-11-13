@@ -343,7 +343,7 @@ int sffs_mount(struct sffs *fs) {
 				return 1;
 			free = (struct sffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
-			printf("free space %zx->%zx\n", block.begin, block.end);
+			printf("free space %zu->%zu\n", block.begin, block.end);
 			if (free->end > fs->device_size)  {
 				printf("SFFS: free spaces crosses device bound!\n");
 				free->end = fs->device_size;
