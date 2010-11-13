@@ -32,7 +32,7 @@ static int mount_image(struct sffs *fs, const char *fname) {
 int main(int argc, char **argv) {
 	struct sffs fs;
 	if (argc <= 1) {
-		printf("usage: [createfs file size|write file|read file]\n");
+		printf("usage: image-file [createfs file size|write file|read file]\n");
 		return 0;
 	}
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 	fs.read = fs_read_func;
 	fs.seek = fs_seek_func;
 
-	if (strcmp(argv[1], "createfs") == 0) {
+	if (strcmp(argv[2], "createfs") == 0) {
 		if (argc < 4) {
 			printf("usage: createfs filename size\n");
 			return 0;
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 		}
 		printf("creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
 		{
-			fd = open(argv[2], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+			fd = open(argv[1], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			if (fd == -1) {
 				perror("open");
 				return 1;
@@ -60,20 +60,20 @@ int main(int argc, char **argv) {
 			sffs_format(&fs);
 			close(fd);
 			
-			if (truncate(argv[2], fs.device_size) == -1)
+			if (truncate(argv[1], fs.device_size) == -1)
 				perror("truncate");
 		}
 		return 0;
-	} else if (strcmp(argv[1], "list") == 0) {
+	} else if (strcmp(argv[2], "list") == 0) {
 		if (argc < 3) {
 			printf("usage: list imagefile\n");
 			return 0;
 		}
-		if (mount_image(&fs, argv[2]) == -1)
+		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 
 		sffs_umount(&fs);
-	} else if (strcmp(argv[1], "write") == 0) {
+	} else if (strcmp(argv[2], "write") == 0) {
 		int f;
 	
 		if (argc < 4) {
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 			return 0;
 		}
 		
-		if (mount_image(&fs, argv[2]) == -1)
+		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 
 		for(f = 3; f < argc; ++f) {
@@ -124,13 +124,13 @@ int main(int argc, char **argv) {
 		sffs_umount(&fs);
 		
 		close(fd);
-	} else if (strcmp(argv[1], "read") == 0) {
+	} else if (strcmp(argv[2], "read") == 0) {
 		int f;
 		if (argc < 4) {
 			printf("usage: read imagefile file\n");
 			return 0;
 		}
-		if (mount_image(&fs, argv[2]) == -1)
+		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 
 		for(f = 3; f < argc; ++f) {
@@ -149,13 +149,13 @@ int main(int argc, char **argv) {
 			free(src);
 		}
 		sffs_umount(&fs);
-	} else if (strcmp(argv[1], "remove") == 0) {
+	} else if (strcmp(argv[2], "remove") == 0) {
 		int f;
 		if (argc < 4) {
 			printf("usage: remove imagefile file\n");
 			return 0;
 		}
-		if (mount_image(&fs, argv[2]) == -1)
+		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 
 		for(f = 3; f < argc; ++f) {
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
 
 		sffs_umount(&fs);
 	} else {
-		printf("unknown command: %s\n", argv[1]);
+		printf("unknown command: %s\n", argv[2]);
 	}
 	
 	return 0;
