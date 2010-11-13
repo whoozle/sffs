@@ -37,6 +37,17 @@ static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t s
 	return entry;
 }
 
+static int sffs_vector_remove(struct sffs_vector *vec, size_t pos, size_t size) {
+	return 0;
+}
+
+uint8_t *sffs_vector_append(struct sffs_vector *vec, size_t size) {
+	size_t old_size = vec->size;
+	if (sffs_vector_resize(vec, old_size + size) == -1)
+		return 0;
+	return vec->ptr + old_size;
+}
+
 static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
 	printf("writing empty header at %zx (block size: %zx)\n", offset, size);
 	char header[16] = {
@@ -48,7 +59,7 @@ static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
 		return -1;
 	
-	*((uint32_t *)&header[10]) = htole32(time(0));
+	//*((uint32_t *)&header[10]) = htole32(time(0)); //splitting block is not considered as modification to avoid fragmentation.
 	*((uint32_t *)&header[1]) = htole32(size - sizeof(header));
 
 	return (fs->write(&header, sizeof(header)) == sizeof(header))? 0: -1;
@@ -75,7 +86,7 @@ static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uin
 	int header_offset = (header[0] & 0x80)? 5: 0;
 	header_offset = 5 - header_offset;
 	header[header_offset] = flags;
-	*((uint32_t *)&header[header_offset + 1]) = htole32(size + padding); //internal block size
+	*((uint32_t *)&header[header_offset + 1]) = htole32(size); //internal block size
 	
 	if (sffs_write_at(fs, offset + header_offset, header + header_offset, 5) == -1)
 		return -1;
@@ -208,10 +219,13 @@ int sffs_unlink(struct sffs *fs, const char *fname) {
 	struct sffs_entry *file = ((struct sffs_entry *)fs->files.ptr) + pos;
 	sffs_write_metadata(fs, file->block.begin, 0, file->block.end - file->block.begin - 16, 0, 0);
 	sffs_commit_metadata(fs, file->block.begin);
-	//fixme: insert into free blocks!
+	
+	struct sffs_block *free = (struct sffs_block *)sffs_vector_append(&fs->free, sizeof(struct sffs_block));
+	*free = file->block;
+	
+	sffs_vector_remove(&fs->files, pos, sizeof(struct sffs_entry));
 	return 0;
 }
-
 
 int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf) {
 	int pos = sffs_find_file(fs, fname);

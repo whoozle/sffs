@@ -32,7 +32,7 @@ static int mount_image(struct sffs *fs, const char *fname) {
 int main(int argc, char **argv) {
 	struct sffs fs;
 	if (argc <= 1) {
-		printf("usage: [createfs image size(2^size)|write file|read file]\n");
+		printf("usage: [createfs file size|write file|read file]\n");
 		return 0;
 	}
 
@@ -42,15 +42,14 @@ int main(int argc, char **argv) {
 
 	if (strcmp(argv[1], "createfs") == 0) {
 		if (argc < 4) {
-			printf("usage: createfs filename number\n");
+			printf("usage: createfs filename size\n");
 			return 0;
 		}
 		fs.device_size = atoi(argv[3]);
-		if (fs.device_size < 10) {
-			printf("size must be greater than 10 (1024 bytes)\n");
+		if (fs.device_size < 32) {
+			printf("size must be greater than 32 bytes\n");
 			return 1;
 		}
-		fs.device_size = 1 << fs.device_size;
 		printf("creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
 		{
 			fd = open(argv[2], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
