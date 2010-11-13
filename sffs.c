@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <endian.h>
 #include <string.h>
+#include <time.h>
 
 static int sffs_entry_compare(const void *a, const void *b) {
 	struct sffs_entry *ea = (struct sffs_entry *)a;
@@ -36,6 +37,91 @@ static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t s
 	return entry;
 }
 
+static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
+	printf("writing empty header at %zx (block size: %zx)\n", offset, size);
+	char header[16] = {
+		0, 0, 0, 0, 0, /*1:flags(empty) + size, current 1st*/
+		0, 0, 0, 0, 0, /*2:flags + size*/
+		0, 0, 0, 0, 0, 0, /*mtime + padding + fname len */
+	};
+
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
+		return -1;
+	
+	*((uint32_t *)&header[10]) = htole32(time(0));
+	*((uint32_t *)&header[1]) = htole32(size - sizeof(header));
+
+	return (fs->write(&header, sizeof(header)) == sizeof(header))? 0: -1;
+}
+
+static int sffs_write_at(struct sffs *fs, off_t offset, const void *data, size_t size) {
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
+		return -1;
+
+	if (fs->write(data, size) != size)
+		return -1;
+
+	return 0;
+}
+
+static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uint32_t size, const char *fname, uint8_t padding) {
+	size_t fname_len = strlen(fname);
+	if (fname_len == 0 || fname_len >= 255)
+		return -1;
+	
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
+		return -1;
+
+	uint8_t header[10];
+	if (fs->read(header, sizeof(header)) != sizeof(header))
+		return -1;
+	
+	int header_offset = (header[0] & 0x80)? 5: 0;
+	int committed = header[header_offset] & 0x40;
+	if (committed) {
+		fprintf(stderr, "cannot overwrite committed metadata\n!");
+		return -1;
+	}
+	header_offset = 5 - header_offset;
+	header[header_offset] |= 0x40; /*flag as committed*/
+	*((uint32_t *)&header[header_offset + 1]) = htole32(size + padding); //internal block size
+	
+	if (sffs_write_at(fs, offset + header_offset, header + header_offset, 5) == -1)
+		return -1;
+	
+	/* update timestamp */
+	uint8_t header2[4 + 1 + 1]; /*timestamp + padding + filename len*/
+	*((uint32_t *)header2) = htole32(time(0));
+	header2[4] = padding;
+	header2[5] = (uint8_t)fname_len;
+
+	if (sffs_write_at(fs, offset + 10, header2, 6) == -1)
+		return -1;
+
+	if (fs->write(fname, fname_len) != fname_len)
+		return -1;
+	
+	return 0;
+}
+
+static int sffs_commit_metadata(struct sffs *fs, off_t offset) {
+	uint8_t flag;
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
+		return -1;
+
+	if (fs->read(&flag, 1) != 1)
+		return -1;
+
+	flag ^= 0x80;
+	if (fs->seek(-1, SEEK_CUR) == (off_t)-1)
+		return -1;
+	
+	if (fs->write(&flag, 1) != 1)
+		return -1;
+
+	return (flag & 0x80) != 0? 1: 0;
+}
+
 static int sffs_find_file(struct sffs *fs, const char *fname) {
 	struct sffs_entry *files = (struct sffs_entry *)fs->files.ptr;
 	int first = 0, last = fs->files.size / sizeof(struct sffs_entry);
@@ -58,12 +144,49 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		struct sffs_entry *file;
 		pos = -pos - 1;
 		printf("inserting at position %d\n", pos);
-		file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos * sizeof(struct sffs_entry), sizeof(struct sffs_entry));
+		file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos, sizeof(struct sffs_entry));
 		if (!file) {
 			printf("failed!\n");
 			return -1;
 		}
 		file->name = strdup(fname);
+		size_t header_size = strlen(fname) + 16; /* 2 * (flags + size) + mtime + padding + fname len + filename */
+		size_t full_size = size + header_size;
+		struct sffs_area *free_begin = (struct sffs_area *)fs->free.ptr;
+		struct sffs_area *free_end = (struct sffs_area *)(fs->free.ptr + fs->free.size);
+		struct sffs_area *best_free = 0;
+		size_t best_size = 0;
+		for(struct sffs_area *free = free_begin; free < free_end; ++free) {
+			size_t free_size = free->end - free->begin;
+			if (free_size >= full_size) {
+				if (!best_free || free_size < best_size) {
+					best_free = free;
+					best_size = free_size;
+				}
+			}
+		}
+		if (!best_free)
+			return -1;
+
+		printf("SFFS: found free block (max size: %zu)\n", best_size);
+		size_t tail_size = best_size - full_size;
+		if (tail_size > 255) {
+			off_t offset = best_free->begin;
+			printf("SFFS: too large, splitting, writing new free-block header\n");
+			/*mark up empty block inside*/
+			if (sffs_write_empty_header(fs, offset + full_size, tail_size) == -1)
+				return -1;
+			//return 0;
+			/*writing data*/
+			if (sffs_write_at(fs, offset + header_size, data, size) == -1)
+				return -1;
+			/*writing metadata*/
+			if (sffs_write_metadata(fs, offset, 0x40, size + strlen(fname), fname, 0) == -1)
+				return -1;
+			/*commit*/
+			if (sffs_commit_metadata(fs, offset) == -1)
+				return -1;
+		}
 	} else {
 		fprintf(stderr, "not implemented\n");
 	}
@@ -76,19 +199,17 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 }
 
 int sffs_format(struct sffs *fs) {
-	char z = 0;
-	if (fs->seek(0, SEEK_SET) == (off_t)-1)
-		return -1;
-	if (fs->write(&z, 1) != 1)
-		return -1;
-	return 0;
+	return sffs_write_empty_header(fs, 0, fs->device_size);
 }
 
 int sffs_mount(struct sffs *fs) {
 	off_t size = fs->seek(0, SEEK_END);
+	off_t data_begin, data_end;
+
 	if (size == (off_t)-1)
 		return -1;
-	fprintf(stderr, "SFFS: device size: %u bytes\n", (unsigned)size);
+
+	fprintf(stderr, "SFFS: device size: %zu bytes\n", size);
 	fs->device_size = size;
 	
 	/*reading journal*/
@@ -103,31 +224,35 @@ int sffs_mount(struct sffs *fs) {
 	fs->free.size = 0;
 	
 	for(;;) {
-		unsigned header_off, committed, file_size;
-		off_t data_begin, data_end;
-		uint8_t header[11], filename_len;
+		unsigned header_off, committed, block_size;
+		uint8_t header[16];
+
+		data_begin = fs->seek(0, SEEK_CUR); /* tell */
 		
-		if (fs->read(header, 11) != 11) 
-			break;
-		
-		filename_len = header[10];
-		if (filename_len == 0 || filename_len == 0xff)
+		if (fs->read(header, sizeof(header)) != sizeof(header))
 			break;
 		
 		header_off = (header[0] & 0x80)? 5: 0;
 		committed = header[header_off] & 0x40;
-		file_size = le32toh(*(uint32_t *)(header + header_off + 1));
-		data_begin = fs->seek(0, SEEK_CUR); /* tell */
-		data_end = fs->seek(file_size, SEEK_CUR);
+
+		block_size = le32toh(*(uint32_t *)(header + header_off + 1));
+		data_end = data_begin + sizeof(header) + block_size;
+		
 		if (data_end == (off_t)-1) {
 			fprintf(stderr, "SFFS: out of bounds\n");
 			return 1;
 		}
+		
 		if (committed) {
+			uint8_t filename_len = header[15];
+			if (filename_len == 0 || filename_len == 0xff)
+				break;
+		
 			struct sffs_entry *file;
 			size_t file_offset = fs->files.size;
 			if (sffs_vector_resize(&fs->files, file_offset + sizeof(struct sffs_entry)) == -1)
 				return 1;
+			
 			file = (struct sffs_entry *)((char *)fs->files.ptr + file_offset);
 			file->name = malloc(filename_len + 1);
 			if (!file->name) {
@@ -138,6 +263,7 @@ int sffs_mount(struct sffs *fs) {
 				return 1;
 			}
 			file->name[filename_len] = 0;
+			printf("read file %s\n", file->name);
 			file->area.begin = data_begin;
 			file->area.end = data_end;
 		} else {
@@ -148,12 +274,22 @@ int sffs_mount(struct sffs *fs) {
 			free = (struct sffs_area *)((char *)fs->free.ptr + free_offset);
 			free->begin = data_begin;
 			free->end = data_end;
+			printf("free space %zx->%zx\n", data_begin, data_end);
+			if (free->end > fs->device_size)  {
+				printf("SFFS: free spaces crosses device bound!\n");
+				free->end = fs->device_size;
+				break;
+			}
+		}
+		if (fs->seek(data_end, SEEK_SET) == (off_t)-1) {
+			fprintf(stderr, "%zu is out of bounds\n", data_end);
+			break;
 		}
 	}
 	
 	{
 		size_t files = fs->files.size / sizeof(struct sffs_entry);
-		fprintf(stderr, "SFFS: sorting %u files...\n", (unsigned)files);
+		fprintf(stderr, "SFFS: sorting %zu files...\n", files);
 		qsort(fs->files.ptr, files, sizeof(struct sffs_entry), sffs_entry_compare);
 	}
 

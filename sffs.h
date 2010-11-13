@@ -4,9 +4,6 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#define SFFS_POOL_BITS 2
-#define SFFS_POOL_SIZE (1 << SFFS_POOL_BITS)
-
 typedef ssize_t (*write_func)(const void *ptr, size_t size);
 typedef ssize_t (*read_func)(void *ptr, size_t size);
 typedef off_t (*seek_func)(off_t offset, int whence);

@@ -5,13 +5,20 @@
 file block: 
 [
 transaction-id: id (first bit of first flag)
+0x00:
 [
 	flags[1]: 0x80 - INDEX(only for first entry), COMMITTED = 0x40	
 	size[4], 
 ][2]
-write count[2]
-filename_len-7bit, filename
-data
+0x0a:
+mtime[4]
+0x0e:
+padding[1]
+0x0f:
+filename_len[1], 
+0x10:
+filename
+data[... + padding]
 ]
 
 1

@@ -1,4 +1,4 @@
-CFLAGS=-Wall -pedantic -O -ggdb
+CFLAGS=-Wall -pedantic -ggdb -std=gnu99
 
 all: sffs-tool
 

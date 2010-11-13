@@ -24,7 +24,7 @@ static int mount_image(struct sffs *fs, const char *fname) {
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
-		return 1;
+		return -1;
 	}
 	return sffs_mount(fs);
 }
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 		fs.device_size = 1 << fs.device_size;
 		printf("creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
 		{
-			fd = open(argv[2], O_CREAT | O_WRONLY | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+			fd = open(argv[2], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			if (fd == -1) {
 				perror("open");
 				return 1;
@@ -65,6 +65,15 @@ int main(int argc, char **argv) {
 				perror("truncate");
 		}
 		return 0;
+	} else if (strcmp(argv[1], "list") == 0) {
+		if (argc < 3) {
+			printf("usage: list imagefile\n");
+			return 0;
+		}
+		if (mount_image(&fs, argv[2]) == -1)
+			return 2;
+
+		sffs_umount(&fs);
 	} else if (strcmp(argv[1], "write") == 0) {
 		int f;
 	
