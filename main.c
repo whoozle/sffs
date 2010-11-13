@@ -140,6 +140,14 @@ int main(int argc, char **argv) {
 			if (sffs_stat(&fs, fname, &buf) == 1)
 				continue;
 			printf("%s = %zu\n", fname, buf.st_size);
+			void *src = malloc(buf.st_size);
+			if (!src)
+				return 1;
+			ssize_t r = sffs_read(&fs, fname, src, buf.st_size);
+			if (r < 0)
+				return 1;
+			fwrite(src, 1, r, stdout);
+			free(src);
 		}
 		sffs_umount(&fs);
 	} else {

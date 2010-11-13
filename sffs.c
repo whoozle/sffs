@@ -198,8 +198,13 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 	if (pos < 0)
 		return -1;
 
-	struct sffs_entry *file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos, sizeof(struct sffs_entry));
-	return size;
+	struct sffs_entry *file = ((struct sffs_entry *)fs->files.ptr) + pos;
+	if (size > file->size)
+		size = file->size;
+	
+	if (fs->seek(file->block.begin + 16 + strlen(fname), SEEK_SET) == (off_t)-1)
+		return -1;
+	return fs->read(data, size);
 }
 
 int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf) {
