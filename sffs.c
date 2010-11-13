@@ -46,6 +46,10 @@ static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t s
 static int sffs_vector_remove(struct sffs_vector *vec, size_t pos, size_t size) {
 	pos *= size;
 	memmove(vec->ptr + pos, vec->ptr + pos + size, vec->size - pos - size);
+	uint8_t *p = (uint8_t *)realloc(vec->ptr, vec->size - size);
+	if (p)
+		vec->ptr = p;
+	vec->size -= size;
 	return 0;
 }
 
