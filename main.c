@@ -125,6 +125,23 @@ int main(int argc, char **argv) {
 		sffs_umount(&fs);
 		
 		close(fd);
+	} else if (strcmp(argv[1], "read") == 0) {
+		int f;
+		if (argc < 4) {
+			printf("usage: read imagefile file\n");
+			return 0;
+		}
+		if (mount_image(&fs, argv[2]) == -1)
+			return 2;
+
+		for(f = 3; f < argc; ++f) {
+			struct stat buf;
+			const char *fname = argv[f];
+			if (sffs_stat(&fs, fname, &buf) == 1)
+				continue;
+			printf("%s = %zu\n", fname, buf.st_size);
+		}
+		sffs_umount(&fs);
 	} else {
 		printf("unknown command: %s\n", argv[1]);
 	}

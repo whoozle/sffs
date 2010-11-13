@@ -152,11 +152,11 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		file->name = strdup(fname);
 		size_t header_size = strlen(fname) + 16; /* 2 * (flags + size) + mtime + padding + fname len + filename */
 		size_t full_size = size + header_size;
-		struct sffs_area *free_begin = (struct sffs_area *)fs->free.ptr;
-		struct sffs_area *free_end = (struct sffs_area *)(fs->free.ptr + fs->free.size);
-		struct sffs_area *best_free = 0;
+		struct sffs_block *free_begin = (struct sffs_block *)fs->free.ptr;
+		struct sffs_block *free_end = (struct sffs_block *)(fs->free.ptr + fs->free.size);
+		struct sffs_block *best_free = 0;
 		size_t best_size = 0;
-		for(struct sffs_area *free = free_begin; free < free_end; ++free) {
+		for(struct sffs_block *free = free_begin; free < free_end; ++free) {
 			size_t free_size = free->end - free->begin;
 			if (free_size >= full_size) {
 				if (!best_free || free_size < best_size) {
@@ -194,8 +194,24 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 }
 
 ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
-	
+	int pos = sffs_find_file(fs, fname);
+	if (pos < 0)
+		return -1;
+
+	struct sffs_entry *file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos, sizeof(struct sffs_entry));
 	return size;
+}
+
+int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf) {
+	int pos = sffs_find_file(fs, fname);
+	if (pos < 0)
+		return -1;
+
+	memset(buf, 0, sizeof(*buf));
+	struct sffs_entry *file = ((struct sffs_entry *)fs->files.ptr) + pos;
+	buf->st_size = file->size;
+	buf->st_mtime = buf->st_ctime = file->block.mtime;
+	return 0;
 }
 
 int sffs_format(struct sffs *fs) {
@@ -204,7 +220,6 @@ int sffs_format(struct sffs *fs) {
 
 int sffs_mount(struct sffs *fs) {
 	off_t size = fs->seek(0, SEEK_END);
-	off_t data_begin, data_end;
 
 	if (size == (off_t)-1)
 		return -1;
@@ -224,10 +239,12 @@ int sffs_mount(struct sffs *fs) {
 	fs->free.size = 0;
 	
 	for(;;) {
+		struct sffs_block block;
+		
 		unsigned header_off, committed, block_size;
 		uint8_t header[16];
 
-		data_begin = fs->seek(0, SEEK_CUR); /* tell */
+		block.begin = fs->seek(0, SEEK_CUR); /* tell */
 		
 		if (fs->read(header, sizeof(header)) != sizeof(header))
 			break;
@@ -236,15 +253,16 @@ int sffs_mount(struct sffs *fs) {
 		committed = header[header_off] & 0x40;
 
 		block_size = le32toh(*(uint32_t *)(header + header_off + 1));
-		data_end = data_begin + sizeof(header) + block_size;
+		block.end = block.begin + sizeof(header) + block_size;
+		block.mtime = (time_t)*(uint32_t *)&header[10];
 		
-		if (data_end == (off_t)-1) {
+		if (block.end == (off_t)-1) {
 			fprintf(stderr, "SFFS: out of bounds\n");
 			return 1;
 		}
 		
 		if (committed) {
-			uint8_t filename_len = header[15];
+			uint8_t filename_len = header[15], padding = header[14];
 			if (filename_len == 0 || filename_len == 0xff)
 				break;
 		
@@ -262,27 +280,26 @@ int sffs_mount(struct sffs *fs) {
 			if (fs->read(file->name, filename_len) != filename_len) {
 				return 1;
 			}
+			file->size = block_size - filename_len - padding;
 			file->name[filename_len] = 0;
-			printf("read file %s\n", file->name);
-			file->area.begin = data_begin;
-			file->area.end = data_end;
+			printf("read file %s -> %zu\n", file->name, file->size);
+			file->block = block;
 		} else {
-			struct sffs_area *free;
+			struct sffs_block *free;
 			size_t free_offset = fs->free.size;
-			if (sffs_vector_resize(&fs->free, free_offset + sizeof(struct sffs_area)) == -1)
+			if (sffs_vector_resize(&fs->free, free_offset + sizeof(struct sffs_block)) == -1)
 				return 1;
-			free = (struct sffs_area *)((char *)fs->free.ptr + free_offset);
-			free->begin = data_begin;
-			free->end = data_end;
-			printf("free space %zx->%zx\n", data_begin, data_end);
+			free = (struct sffs_block *)((char *)fs->free.ptr + free_offset);
+			*free = block;
+			printf("free space %zx->%zx\n", block.begin, block.end);
 			if (free->end > fs->device_size)  {
 				printf("SFFS: free spaces crosses device bound!\n");
 				free->end = fs->device_size;
 				break;
 			}
 		}
-		if (fs->seek(data_end, SEEK_SET) == (off_t)-1) {
-			fprintf(stderr, "%zu is out of bounds\n", data_end);
+		if (fs->seek(block.end, SEEK_SET) == (off_t)-1) {
+			fprintf(stderr, "%zu is out of bounds\n", block.end);
 			break;
 		}
 	}
