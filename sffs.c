@@ -85,7 +85,8 @@ static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uin
 	
 	int header_offset = (header[0] & 0x80)? 5: 0;
 	header_offset = 5 - header_offset;
-	header[header_offset] = flags;
+	header[header_offset] &= 0x80;
+	header[header_offset] |= flags;
 	*((uint32_t *)&header[header_offset + 1]) = htole32(size); //internal block size
 	
 	if (sffs_write_at(fs, offset + header_offset, header + header_offset, 5) == -1)
@@ -217,8 +218,10 @@ int sffs_unlink(struct sffs *fs, const char *fname) {
 		return -1;
 
 	struct sffs_entry *file = ((struct sffs_entry *)fs->files.ptr) + pos;
-	sffs_write_metadata(fs, file->block.begin, 0, file->block.end - file->block.begin - 16, 0, 0);
-	sffs_commit_metadata(fs, file->block.begin);
+	if (sffs_write_metadata(fs, file->block.begin, 0, file->block.end - file->block.begin - 16, 0, 0) == -1)
+		return -1;
+	if (sffs_commit_metadata(fs, file->block.begin) == -1)
+		return -1;
 	
 	struct sffs_block *free = (struct sffs_block *)sffs_vector_append(&fs->free, sizeof(struct sffs_block));
 	*free = file->block;
