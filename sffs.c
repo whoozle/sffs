@@ -38,6 +38,8 @@ static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t s
 }
 
 static int sffs_vector_remove(struct sffs_vector *vec, size_t pos, size_t size) {
+	pos *= size;
+	memmove(vec->ptr + pos, vec->ptr + pos + size, vec->size - pos - size);
 	return 0;
 }
 
@@ -191,7 +193,8 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 			/*commit*/
 			if (sffs_commit_metadata(fs, offset) == -1)
 				return -1;
-		}
+		} else
+			fprintf(stderr, "tail_size < 255\n");
 	} else {
 		fprintf(stderr, "not implemented\n");
 	}
@@ -212,6 +215,26 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 	return fs->read(data, size);
 }
 
+static int sffs_compact(struct sffs *fs) {
+	struct sffs_block *free = (struct sffs_block *)fs->free.ptr;
+	size_t i;
+	for(i = 0; i < fs->free.size / sizeof(struct sffs_block) - 1; ) {
+		size_t j = i + 1;
+		if (free[i].end == free[j].begin) {
+			size_t size = free[j].end - free[i].begin;
+			free = (struct sffs_block *)fs->free.ptr; /*might be relocated*/
+			if (sffs_write_metadata(fs, free[i].begin, 0, size - 16, 0, 0) == -1)
+				return -1;
+			if (sffs_commit_metadata(fs, free[i].begin) == -1)
+				return -1;
+			free[i].end = free[j].end;
+			sffs_vector_remove(&fs->free, j, sizeof(struct sffs_block));
+		} else
+			++i;
+	}
+	return 0;
+}
+
 int sffs_unlink(struct sffs *fs, const char *fname) {
 	int pos = sffs_find_file(fs, fname);
 	if (pos < 0)
@@ -227,7 +250,7 @@ int sffs_unlink(struct sffs *fs, const char *fname) {
 	*free = file->block;
 	
 	sffs_vector_remove(&fs->files, pos, sizeof(struct sffs_entry));
-	return 0;
+	return sffs_compact(fs);
 }
 
 int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf) {
@@ -245,6 +268,7 @@ int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf) {
 int sffs_format(struct sffs *fs) {
 	return sffs_write_empty_header(fs, 0, fs->device_size);
 }
+
 
 int sffs_mount(struct sffs *fs) {
 	off_t size = fs->seek(0, SEEK_END);
@@ -337,10 +361,13 @@ int sffs_mount(struct sffs *fs) {
 		fprintf(stderr, "SFFS: sorting %zu files...\n", files);
 		qsort(fs->files.ptr, files, sizeof(struct sffs_entry), sffs_entry_compare);
 	}
-
+	fprintf(stderr, "SFFS: compacting free space...\n");
+	sffs_compact(fs);
 	fprintf(stderr, "SFFS: mounted!\n");
 	return 0;
 }
+
+
 
 int sffs_umount(struct sffs *fs) {
 	return 0;

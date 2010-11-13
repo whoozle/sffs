@@ -31,7 +31,7 @@ static int mount_image(struct sffs *fs, const char *fname) {
 
 int main(int argc, char **argv) {
 	struct sffs fs;
-	if (argc <= 1) {
+	if (argc < 3) {
 		printf("usage: image-file [createfs file size|write file|read file]\n");
 		return 0;
 	}
