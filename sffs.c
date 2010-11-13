@@ -11,6 +11,12 @@ static int sffs_entry_compare(const void *a, const void *b) {
 	return strcmp(ea->name, eb->name);
 }
 
+static int sffs_block_compare(const void *a, const void *b) {
+	struct sffs_block *ea = (struct sffs_block *)a;
+	struct sffs_block *eb = (struct sffs_block *)b;
+	return ea->begin - eb->begin;
+}
+
 static int sffs_vector_resize(struct sffs_vector *vec, size_t new_size) {
 	uint8_t *p = (uint8_t *)realloc(vec->ptr, new_size);
 	if (!p && new_size) {
@@ -222,13 +228,13 @@ static int sffs_compact(struct sffs *fs) {
 		size_t j = i + 1;
 		if (free[i].end == free[j].begin) {
 			size_t size = free[j].end - free[i].begin;
-			free = (struct sffs_block *)fs->free.ptr; /*might be relocated*/
 			if (sffs_write_metadata(fs, free[i].begin, 0, size - 16, 0, 0) == -1)
 				return -1;
 			if (sffs_commit_metadata(fs, free[i].begin) == -1)
 				return -1;
 			free[i].end = free[j].end;
 			sffs_vector_remove(&fs->free, j, sizeof(struct sffs_block));
+			free = (struct sffs_block *)fs->free.ptr; /*might be relocated*/
 		} else
 			++i;
 	}
@@ -248,6 +254,12 @@ int sffs_unlink(struct sffs *fs, const char *fname) {
 	
 	struct sffs_block *free = (struct sffs_block *)sffs_vector_append(&fs->free, sizeof(struct sffs_block));
 	*free = file->block;
+	
+	{
+		size_t free_blocks = fs->free.size / sizeof(struct sffs_block);
+		fprintf(stderr, "SFFS: sorting %zu free blocks...\n", free_blocks);
+		qsort(fs->files.ptr, free_blocks, sizeof(struct sffs_block), sffs_block_compare);
+	}
 	
 	sffs_vector_remove(&fs->files, pos, sizeof(struct sffs_entry));
 	return sffs_compact(fs);
