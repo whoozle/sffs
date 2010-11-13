@@ -23,7 +23,7 @@ struct sffs_entry {
 };
 
 struct sffs_vector {
-	void *ptr;
+	uint8_t *ptr;
 	size_t size;
 };
 

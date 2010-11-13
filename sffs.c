@@ -4,8 +4,14 @@
 #include <endian.h>
 #include <string.h>
 
+static int sffs_entry_compare(const void *a, const void *b) {
+	struct sffs_entry *ea = (struct sffs_entry *)a;
+	struct sffs_entry *eb = (struct sffs_entry *)b;
+	return strcmp(ea->name, eb->name);
+}
+
 static int sffs_vector_resize(struct sffs_vector *vec, size_t new_size) {
-	void *p = realloc(vec->ptr, new_size);
+	uint8_t *p = (uint8_t *)realloc(vec->ptr, new_size);
 	if (!p && new_size) {
 		perror("realloc");
 		return -1;
@@ -13,6 +19,21 @@ static int sffs_vector_resize(struct sffs_vector *vec, size_t new_size) {
 	vec->ptr = p;
 	vec->size = new_size;
 	return 0;
+}
+
+static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t size) {
+	uint8_t *p = (uint8_t *)realloc(vec->ptr, vec->size + size), *entry;
+	if (!p) {
+		perror("realloc");
+		return 0;
+	}
+	vec->ptr = p;
+	pos *= size;
+	entry = vec->ptr + pos;
+	memmove(entry + size, entry, vec->size - pos);
+	memset(entry, 0, size);
+	vec->size += size;
+	return entry;
 }
 
 static int sffs_find_file(struct sffs *fs, const char *fname) {
@@ -34,8 +55,15 @@ static int sffs_find_file(struct sffs *fs, const char *fname) {
 ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t size) {
 	int pos = sffs_find_file(fs, fname);
 	if (pos < 0) {
+		struct sffs_entry *file;
 		pos = -pos - 1;
 		printf("inserting at position %d\n", pos);
+		file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos * sizeof(struct sffs_entry), sizeof(struct sffs_entry));
+		if (!file) {
+			printf("failed!\n");
+			return -1;
+		}
+		file->name = strdup(fname);
 	} else {
 		fprintf(stderr, "not implemented\n");
 	}
@@ -123,7 +151,11 @@ int sffs_mount(struct sffs *fs) {
 		}
 	}
 	
-	fprintf(stderr, "SFFS: sorting FIXME!\n");
+	{
+		size_t files = fs->files.size / sizeof(struct sffs_entry);
+		fprintf(stderr, "SFFS: sorting %u files...\n", (unsigned)files);
+		qsort(fs->files.ptr, files, sizeof(struct sffs_entry), sffs_entry_compare);
+	}
 
 	fprintf(stderr, "SFFS: mounted!\n");
 	return 0;
