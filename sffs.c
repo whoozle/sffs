@@ -38,7 +38,6 @@ static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t s
 	pos *= size;
 	entry = vec->ptr + pos;
 	memmove(entry + size, entry, vec->size - pos);
-	memset(entry, 0, size);
 	vec->size += size;
 	return entry;
 }
@@ -230,6 +229,7 @@ static int sffs_compact(struct sffs *fs) {
 	size_t i;
 	for(i = 0; i < fs->free.size / sizeof(struct sffs_block) - 1; ) {
 		size_t j = i + 1;
+		printf("joining %zu->%zu %zu %zu %zu %zu\n", i, j, free[i].begin, free[i].end, free[j].begin, free[j].end);
 		if (free[i].end == free[j].begin) {
 			size_t size = free[j].end - free[i].begin;
 			if (sffs_write_metadata(fs, free[i].begin, 0, size - 16, 0, 0) == -1)
@@ -262,7 +262,7 @@ int sffs_unlink(struct sffs *fs, const char *fname) {
 	{
 		size_t free_blocks = fs->free.size / sizeof(struct sffs_block);
 		fprintf(stderr, "SFFS: sorting %zu free blocks...\n", free_blocks);
-		qsort(fs->files.ptr, free_blocks, sizeof(struct sffs_block), sffs_block_compare);
+		qsort(fs->free.ptr, free_blocks, sizeof(struct sffs_block), sffs_block_compare);
 	}
 	
 	sffs_vector_remove(&fs->files, pos, sizeof(struct sffs_entry));
