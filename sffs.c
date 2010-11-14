@@ -60,7 +60,6 @@ uint8_t *sffs_vector_append(struct sffs_vector *vec, size_t size) {
 }
 
 static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
-	printf("writing empty header at %zx (block size: %zx)\n", offset, size);
 	char header[16] = {
 		0, 0, 0, 0, 0, /*1:flags(empty) + size, current 1st*/
 		0, 0, 0, 0, 0, /*2:flags + size*/
@@ -155,7 +154,6 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	if (pos < 0) {
 		struct sffs_entry *file;
 		pos = -pos - 1;
-		printf("inserting at position %d\n", pos);
 		file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos, sizeof(struct sffs_entry));
 		if (!file) {
 			printf("failed!\n");
@@ -180,11 +178,9 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		if (!best_free)
 			return -1;
 
-		printf("SFFS: found free block (max size: %zu)\n", best_size);
 		size_t tail_size = best_size - full_size;
 		if (tail_size > 255) {
 			off_t offset = best_free->begin;
-			printf("SFFS: too large, splitting, writing new free-block header\n");
 			/*mark up empty block inside*/
 			best_free->begin = offset + full_size;
 			if (sffs_write_empty_header(fs, best_free->begin, tail_size) == -1)
@@ -225,11 +221,11 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 }
 
 static int sffs_compact(struct sffs *fs) {
+	fprintf(stderr, "SFFS: compacting free space...\n");
 	struct sffs_block *free = (struct sffs_block *)fs->free.ptr;
 	size_t i;
 	for(i = 0; i < fs->free.size / sizeof(struct sffs_block) - 1; ) {
 		size_t j = i + 1;
-		printf("joining %zu->%zu %zu %zu %zu %zu\n", i, j, free[i].begin, free[i].end, free[j].begin, free[j].end);
 		if (free[i].end == free[j].begin) {
 			size_t size = free[j].end - free[i].begin;
 			if (sffs_write_metadata(fs, free[i].begin, 0, size - 16, 0, 0) == -1)
@@ -261,7 +257,6 @@ int sffs_unlink(struct sffs *fs, const char *fname) {
 	
 	{
 		size_t free_blocks = fs->free.size / sizeof(struct sffs_block);
-		fprintf(stderr, "SFFS: sorting %zu free blocks...\n", free_blocks);
 		qsort(fs->free.ptr, free_blocks, sizeof(struct sffs_block), sffs_block_compare);
 	}
 	
@@ -300,7 +295,6 @@ int sffs_mount(struct sffs *fs) {
 	if (size == (off_t)-1)
 		return -1;
 	
-	fprintf(stderr, "SFFS: reading metadata\n");
 	fs->files.ptr = 0;
 	fs->files.size = 0;
 	fs->free.ptr = 0;
@@ -350,7 +344,7 @@ int sffs_mount(struct sffs *fs) {
 			}
 			file->size = block_size - filename_len - padding;
 			file->name[filename_len] = 0;
-			printf("read file %s -> %zu\n", file->name, file->size);
+			fprintf(stderr, "SFFS: read file %s -> %zu\n", file->name, file->size);
 			file->block = block;
 		} else {
 			struct sffs_block *free;
@@ -359,9 +353,9 @@ int sffs_mount(struct sffs *fs) {
 				return 1;
 			free = (struct sffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
-			printf("free space %zu->%zu\n", block.begin, block.end);
+			fprintf(stderr, "SFFS: free space %zu->%zu\n", block.begin, block.end);
 			if (free->end > fs->device_size)  {
-				printf("SFFS: free spaces crosses device bound!\n");
+				fprintf(stderr, "SFFS: free spaces crosses device bound!\n");
 				free->end = fs->device_size;
 				break;
 			}
@@ -374,10 +368,8 @@ int sffs_mount(struct sffs *fs) {
 	
 	{
 		size_t files = fs->files.size / sizeof(struct sffs_entry);
-		fprintf(stderr, "SFFS: sorting %zu files...\n", files);
 		qsort(fs->files.ptr, files, sizeof(struct sffs_entry), sffs_entry_compare);
 	}
-	fprintf(stderr, "SFFS: compacting free space...\n");
 	sffs_compact(fs);
 	fprintf(stderr, "SFFS: mounted!\n");
 	return 0;
