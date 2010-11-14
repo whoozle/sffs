@@ -156,7 +156,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		pos = -pos - 1;
 		file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos, sizeof(struct sffs_entry));
 		if (!file) {
-			printf("failed!\n");
+			fprintf(stderr, "inserting file struct failed!\n");
 			return -1;
 		}
 		file->name = strdup(fname);
