@@ -195,7 +195,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		if (sffs_write_at(fs, offset + header_size, data, size) == -1)
 			return -1;
 		/*writing metadata*/
-		if (sffs_write_metadata(fs, offset, 0x40, size + fname_len, fname_len, padding) == -1)
+		if (sffs_write_metadata(fs, offset, 0x40, size + fname_len + padding, fname_len, padding) == -1)
 			return -1;
 		/*write filename*/
 		if (fs->write(fname, fname_len) != fname_len)
@@ -226,8 +226,11 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 static int sffs_compact(struct sffs *fs) {
 	fprintf(stderr, "SFFS: compacting free space...\n");
 	struct sffs_block *free = (struct sffs_block *)fs->free.ptr;
-	size_t i;
-	for(i = 0; i < fs->free.size / sizeof(struct sffs_block) - 1; ) {
+	size_t i, n = fs->free.size / sizeof(struct sffs_block);
+	if (n < 2)
+		return 0;
+	--n;
+	for(i = 0; i < n; ) {
 		size_t j = i + 1;
 		if (free[i].end == free[j].begin) {
 			size_t size = free[j].end - free[i].begin;
