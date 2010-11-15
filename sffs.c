@@ -271,6 +271,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	} else {
 		/* tail_size == SFFS_HEADER_SIZE or less */
 		padding = tail_size;
+		sffs_vector_remove(&fs->free, best_free - (struct sffs_block *)fs->free.ptr, sizeof(struct sffs_block));
 	}
 
 	/*writing data*/
