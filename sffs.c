@@ -166,6 +166,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		struct sffs_block *free_end = (struct sffs_block *)(fs->free.ptr + fs->free.size);
 		struct sffs_block *best_free = 0;
 		size_t best_size = 0;
+		uint8_t padding;
 		for(struct sffs_block *free = free_begin; free < free_end; ++free) {
 			size_t free_size = free->end - free->begin;
 			if (free_size >= full_size) {
@@ -179,27 +180,29 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 			return -1;
 
 		size_t tail_size = best_size - full_size;
-		if (tail_size > 255) {
-			off_t offset = best_free->begin;
+		off_t offset = best_free->begin;
+		if (tail_size > 16) {
 			/*mark up empty block inside*/
 			best_free->begin = offset + full_size;
 			if (sffs_write_empty_header(fs, best_free->begin, tail_size) == -1)
 				return -1;
-			//return 0;
-			/*writing data*/
-			if (sffs_write_at(fs, offset + header_size, data, size) == -1)
-				return -1;
-			/*writing metadata*/
-			if (sffs_write_metadata(fs, offset, 0x40, size + fname_len, fname_len, 0) == -1)
-				return -1;
-			/*write filename*/
-			if (fs->write(fname, fname_len) != fname_len)
-				return -1;
-			/*commit*/
-			if (sffs_commit_metadata(fs, offset) == -1)
-				return -1;
-		} else
-			fprintf(stderr, "tail_size < 255\n");
+			padding = 0;
+		} else {
+			/* tail_size == 16 or less */
+			padding = tail_size;
+		}
+		/*writing data*/
+		if (sffs_write_at(fs, offset + header_size, data, size) == -1)
+			return -1;
+		/*writing metadata*/
+		if (sffs_write_metadata(fs, offset, 0x40, size + fname_len, fname_len, padding) == -1)
+			return -1;
+		/*write filename*/
+		if (fs->write(fname, fname_len) != fname_len)
+			return -1;
+		/*commit*/
+		if (sffs_commit_metadata(fs, offset) == -1)
+			return -1;
 	} else {
 		fprintf(stderr, "not implemented\n");
 	}
