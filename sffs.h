@@ -11,6 +11,10 @@
 #	define LOG_ERROR(fmt) printf fmt; fputc('\n', stdout)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif 
+
 typedef ssize_t (*write_func)(const void *ptr, size_t size);
 typedef ssize_t (*read_func)(void *ptr, size_t size);
 typedef off_t (*seek_func)(off_t offset, int whence);
@@ -51,6 +55,11 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size);
 int sffs_unlink(struct sffs *fs, const char *fname);
 int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf);
+const char* sffs_filename(struct sffs *fs, size_t index);
+
+#ifdef __cplusplus
+}
+#endif 
 
 #endif
 

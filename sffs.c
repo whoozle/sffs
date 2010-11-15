@@ -61,6 +61,14 @@ uint8_t *sffs_vector_append(struct sffs_vector *vec, size_t size) {
 	return vec->ptr + old_size;
 }
 
+const char* sffs_filename(struct sffs *fs, size_t index) {
+	index *= sizeof(struct sffs_entry);
+	if (index < fs->files.size) {
+		return ((struct sffs_entry *)(fs->files.ptr + index))->name;
+	} else
+		return 0;
+}
+
 static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
 	char header[SFFS_HEADER_SIZE] = {
 		0, 0, 0, 0, 0, /*1:flags(empty) + size, current 1st*/
