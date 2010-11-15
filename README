@@ -5,4 +5,8 @@ unbuffered serial write to NVRAM. Writing into such NVRAM splitted into
 single-byte commands and could be interrupted at any single byte without losing
 your precious data.
 
+Also this filesystem will protect you from NVRAM wearing. It saves timestamps
+of writes and always rotate files around the flash, so you never got the same
+file written again and again on the same place.
+
 This was quite an interesting experience and I hope you'll find it useful.
