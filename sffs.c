@@ -5,6 +5,8 @@
 #include <string.h>
 #include <time.h>
 
+#define SFFS_HEADER_SIZE (16)
+
 static int sffs_entry_compare(const void *a, const void *b) {
 	struct sffs_entry *ea = (struct sffs_entry *)a;
 	struct sffs_entry *eb = (struct sffs_entry *)b;
@@ -60,7 +62,7 @@ uint8_t *sffs_vector_append(struct sffs_vector *vec, size_t size) {
 }
 
 static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
-	char header[16] = {
+	char header[SFFS_HEADER_SIZE] = {
 		0, 0, 0, 0, 0, /*1:flags(empty) + size, current 1st*/
 		0, 0, 0, 0, 0, /*2:flags + size*/
 		0, 0, 0, 0, 0, 0, /*mtime + padding + fname len */
@@ -176,7 +178,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 			return -1;
 		}
 		file->name = strdup(fname);
-		size_t header_size = fname_len + 16; /* 2 * (flags + size) + mtime + padding + fname len + filename */
+		size_t header_size = fname_len + SFFS_HEADER_SIZE; /* 2 * (flags + size) + mtime + padding + fname len + filename */
 		size_t full_size = size + header_size;
 		struct sffs_block *best_free = find_best_free(fs, full_size);
 		if (!best_free)
@@ -185,14 +187,14 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		size_t best_size = best_free->end - best_free->begin, tail_size = best_size - full_size;
 		off_t offset = best_free->begin;
 		uint8_t padding;
-		if (tail_size > 16) {
+		if (tail_size > SFFS_HEADER_SIZE) {
 			/*mark up empty block inside*/
 			best_free->begin = offset + full_size;
 			if (sffs_write_empty_header(fs, best_free->begin, tail_size) == -1)
 				return -1;
 			padding = 0;
 		} else {
-			/* tail_size == 16 or less */
+			/* tail_size == SFFS_HEADER_SIZE or less */
 			padding = tail_size;
 		}
 		/*writing data*/
@@ -222,7 +224,7 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 	if (size > file->size)
 		size = file->size;
 	
-	if (fs->seek(file->block.begin + 16 + strlen(fname), SEEK_SET) == (off_t)-1)
+	if (fs->seek(file->block.begin + SFFS_HEADER_SIZE + strlen(fname), SEEK_SET) == (off_t)-1)
 		return -1;
 	return fs->read(data, size);
 }
@@ -238,7 +240,7 @@ static int sffs_compact(struct sffs *fs) {
 		size_t j = i + 1;
 		if (free[i].end == free[j].begin) {
 			size_t size = free[j].end - free[i].begin;
-			if (sffs_write_metadata(fs, free[i].begin, 0, size - 16, 0, 0) == -1)
+			if (sffs_write_metadata(fs, free[i].begin, 0, size - SFFS_HEADER_SIZE, 0, 0) == -1)
 				return -1;
 			if (sffs_commit_metadata(fs, free[i].begin) == -1)
 				return -1;
@@ -257,7 +259,7 @@ int sffs_unlink(struct sffs *fs, const char *fname) {
 		return -1;
 
 	struct sffs_entry *file = ((struct sffs_entry *)fs->files.ptr) + pos;
-	if (sffs_write_metadata(fs, file->block.begin, 0, file->block.end - file->block.begin - 16, 0, 0) == -1)
+	if (sffs_write_metadata(fs, file->block.begin, 0, file->block.end - file->block.begin - SFFS_HEADER_SIZE, 0, 0) == -1)
 		return -1;
 	if (sffs_commit_metadata(fs, file->block.begin) == -1)
 		return -1;
@@ -314,7 +316,7 @@ int sffs_mount(struct sffs *fs) {
 		struct sffs_block block;
 		
 		unsigned header_off, committed, block_size;
-		uint8_t header[16];
+		uint8_t header[SFFS_HEADER_SIZE];
 
 		block.begin = fs->seek(0, SEEK_CUR); /* tell */
 		
