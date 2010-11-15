@@ -147,6 +147,22 @@ static int sffs_find_file(struct sffs *fs, const char *fname) {
 	}
 	return -(first + 1);
 }
+static struct sffs_block *find_best_free(struct sffs *fs, size_t full_size) {
+	struct sffs_block *free_begin = (struct sffs_block *)fs->free.ptr;
+	struct sffs_block *free_end = (struct sffs_block *)(fs->free.ptr + fs->free.size);
+	struct sffs_block *best_free = 0;
+	size_t best_size = 0;
+	for(struct sffs_block *free = free_begin; free < free_end; ++free) {
+		size_t free_size = free->end - free->begin;
+		if (free_size >= full_size) {
+			if (!best_free || free_size < best_size) {
+				best_free = free;
+				best_size = free_size;
+			}
+		}
+	}
+	return best_free;
+}
 
 ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t size) {
 	size_t fname_len = strlen(fname);
@@ -162,25 +178,13 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		file->name = strdup(fname);
 		size_t header_size = fname_len + 16; /* 2 * (flags + size) + mtime + padding + fname len + filename */
 		size_t full_size = size + header_size;
-		struct sffs_block *free_begin = (struct sffs_block *)fs->free.ptr;
-		struct sffs_block *free_end = (struct sffs_block *)(fs->free.ptr + fs->free.size);
-		struct sffs_block *best_free = 0;
-		size_t best_size = 0;
-		uint8_t padding;
-		for(struct sffs_block *free = free_begin; free < free_end; ++free) {
-			size_t free_size = free->end - free->begin;
-			if (free_size >= full_size) {
-				if (!best_free || free_size < best_size) {
-					best_free = free;
-					best_size = free_size;
-				}
-			}
-		}
+		struct sffs_block *best_free = find_best_free(fs, full_size);
 		if (!best_free)
 			return -1;
 
-		size_t tail_size = best_size - full_size;
+		size_t best_size = best_free->end - best_free->begin, tail_size = best_size - full_size;
 		off_t offset = best_free->begin;
+		uint8_t padding;
 		if (tail_size > 16) {
 			/*mark up empty block inside*/
 			best_free->begin = offset + full_size;
