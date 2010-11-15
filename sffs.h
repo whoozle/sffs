@@ -8,6 +8,7 @@
 #ifdef LOG_STUBS
 #	include <stdio.h>
 #	define LOG_DEBUG(fmt) printf fmt; fputc('\n', stdout)
+#	define LOG_INFO(fmt) printf fmt; fputc('\n', stdout)
 #	define LOG_ERROR(fmt) printf fmt; fputc('\n', stdout)
 #endif
 

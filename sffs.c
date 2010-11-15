@@ -10,7 +10,10 @@
 static int sffs_entry_compare(const void *a, const void *b) {
 	struct sffs_entry *ea = (struct sffs_entry *)a;
 	struct sffs_entry *eb = (struct sffs_entry *)b;
-	return strcmp(ea->name, eb->name);
+	int d = strcmp(ea->name, eb->name);
+	if (d)
+		return d;
+	return ea->block.mtime - eb->block.mtime;
 }
 
 static int sffs_block_compare(const void *a, const void *b) {
@@ -175,7 +178,9 @@ static int sffs_compact(struct sffs *fs) {
 			if (sffs_commit_metadata(fs, free[i].begin) == -1)
 				return -1;
 			free[i].end = free[j].end;
-			sffs_vector_remove(&fs->free, j, sizeof(struct sffs_block));
+			if (sffs_vector_remove(&fs->free, j, sizeof(struct sffs_block)) == -1)
+				return -1;
+			--n;
 			free = (struct sffs_block *)fs->free.ptr; /*might be relocated*/
 		} else
 			++i;
@@ -184,6 +189,28 @@ static int sffs_compact(struct sffs *fs) {
 }
 
 static int sffs_recover_and_remove_old_files(struct sffs *fs) {
+	struct sffs_entry *files = (struct sffs_entry *)fs->files.ptr;
+	size_t i, n = fs->files.size / sizeof(struct sffs_entry);
+	if (n < 2)
+		return 0;
+	--n;
+	for(i = 0; i < n; ) {
+		size_t j = i + 1;
+		struct sffs_entry *file = files + i;
+		if (strcmp(file->name, files[j].name) == 0) {
+			size_t size = file->block.end - file->block.begin;
+			LOG_INFO(("unlinking older file %s@%u", file->name, (unsigned)file->block.mtime));
+			if (sffs_write_metadata(fs, file->block.begin, 0, size - SFFS_HEADER_SIZE, 0, 0) == -1)
+				return -1;
+			if (sffs_commit_metadata(fs, file->block.begin) == -1)
+				return -1;
+			if (sffs_vector_remove(&fs->files, i, sizeof(struct sffs_entry)) == -1)
+				return -1;
+			--n;
+			files = (struct sffs_entry *)fs->files.ptr;
+		} else
+			++i;
+	}
 	return 0;
 }
 
@@ -289,7 +316,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 
 	if (remove_me >= 0) {
 		/*removing old copy*/
-		sffs_unlink_at(fs, remove_me);
+		//sffs_unlink_at(fs, remove_me);
 	}
 	return size;
 }
