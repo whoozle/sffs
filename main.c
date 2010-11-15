@@ -66,13 +66,16 @@ int main(int argc, char **argv) {
 		return 0;
 	} else if (strcmp(argv[2], "list") == 0) {
 		const char *name;
+		size_t i;
+
 		if (argc < 3) {
 			printf("usage: list imagefile\n");
 			return 0;
 		}
+
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
-		for(size_t i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
+		for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
 			printf("%s\n", name);
 		}
 
