@@ -5,6 +5,12 @@
 #include <sys/stat.h>
 #include <stdint.h>
 
+#ifdef LOG_STUBS
+#	include <stdio.h>
+#	define LOG_DEBUG(fmt) printf fmt; fputc('\n', stdout)
+#	define LOG_ERROR(fmt) printf fmt; fputc('\n', stdout)
+#endif
+
 typedef ssize_t (*write_func)(const void *ptr, size_t size);
 typedef ssize_t (*read_func)(void *ptr, size_t size);
 typedef off_t (*seek_func)(off_t offset, int whence);

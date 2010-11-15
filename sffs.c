@@ -174,7 +174,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		pos = -pos - 1;
 		file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos, sizeof(struct sffs_entry));
 		if (!file) {
-			fprintf(stderr, "inserting file struct failed!\n");
+			LOG_ERROR(("inserting file struct failed!"));
 			return -1;
 		}
 		file->name = strdup(fname);
@@ -210,7 +210,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		if (sffs_commit_metadata(fs, offset) == -1)
 			return -1;
 	} else {
-		fprintf(stderr, "not implemented\n");
+		LOG_ERROR(("not implemented"));
 	}
 	return size;
 }
@@ -230,7 +230,7 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 }
 
 static int sffs_compact(struct sffs *fs) {
-	fprintf(stderr, "SFFS: compacting free space...\n");
+	LOG_DEBUG(("SFFS: compacting free space..."));
 	struct sffs_block *free = (struct sffs_block *)fs->free.ptr;
 	size_t i, n = fs->free.size / sizeof(struct sffs_block);
 	if (n < 2)
@@ -299,7 +299,7 @@ int sffs_mount(struct sffs *fs) {
 	if (size == (off_t)-1)
 		return -1;
 
-	fprintf(stderr, "SFFS: device size: %zu bytes\n", size);
+	LOG_DEBUG(("SFFS: device size: %zu bytes", size));
 	fs->device_size = size;
 	
 	/*reading journal*/
@@ -331,7 +331,7 @@ int sffs_mount(struct sffs *fs) {
 		block.mtime = (time_t)*(uint32_t *)&header[10];
 		
 		if (block.end == (off_t)-1) {
-			fprintf(stderr, "SFFS: out of bounds\n");
+			LOG_ERROR(("SFFS: out of bounds"));
 			return 1;
 		}
 		
@@ -356,7 +356,7 @@ int sffs_mount(struct sffs *fs) {
 			}
 			file->size = block_size - filename_len - padding;
 			file->name[filename_len] = 0;
-			fprintf(stderr, "SFFS: read file %s -> %zu\n", file->name, file->size);
+			LOG_DEBUG(("SFFS: read file %s -> %zu", file->name, file->size));
 			file->block = block;
 		} else {
 			struct sffs_block *free;
@@ -365,15 +365,15 @@ int sffs_mount(struct sffs *fs) {
 				return 1;
 			free = (struct sffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
-			fprintf(stderr, "SFFS: free space %zu->%zu\n", block.begin, block.end);
+			LOG_DEBUG(("SFFS: free space %zu->%zu", block.begin, block.end));
 			if (free->end > fs->device_size)  {
-				fprintf(stderr, "SFFS: free spaces crosses device bound!\n");
+				LOG_ERROR(("SFFS: free spaces crosses device bound!"));
 				free->end = fs->device_size;
 				break;
 			}
 		}
 		if (fs->seek(block.end, SEEK_SET) == (off_t)-1) {
-			fprintf(stderr, "%zu is out of bounds\n", block.end);
+			LOG_ERROR(("%zu is out of bounds", block.end));
 			break;
 		}
 	}
@@ -383,7 +383,7 @@ int sffs_mount(struct sffs *fs) {
 		qsort(fs->files.ptr, files, sizeof(struct sffs_entry), sffs_entry_compare);
 	}
 	sffs_compact(fs);
-	fprintf(stderr, "SFFS: mounted!\n");
+	LOG_DEBUG(("SFFS: mounted!"));
 	return 0;
 }
 
