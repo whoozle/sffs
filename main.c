@@ -143,13 +143,16 @@ int main(int argc, char **argv) {
 		for(f = 3; f < argc; ++f) {
 			struct stat buf;
 			const char *fname = argv[f];
+			void *src;
+			ssize_t r;
 			if (sffs_stat(&fs, fname, &buf) == 1)
 				continue;
 			printf("%s = %zu\n", fname, buf.st_size);
-			void *src = malloc(buf.st_size);
+			src = malloc(buf.st_size);
 			if (!src)
 				return 1;
-			ssize_t r = sffs_read(&fs, fname, src, buf.st_size);
+			
+			r = sffs_read(&fs, fname, src, buf.st_size);
 			if (r < 0)
 				return 1;
 			fwrite(src, 1, r, stdout);
