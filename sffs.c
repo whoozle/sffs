@@ -199,7 +199,7 @@ static int sffs_recover_and_remove_old_files(struct sffs *fs) {
 		struct sffs_entry *file = files + i;
 		if (strcmp(file->name, files[j].name) == 0) {
 			size_t size = file->block.end - file->block.begin;
-			LOG_INFO(("unlinking older file %s@%u", file->name, (unsigned)file->block.mtime));
+			LOG_INFO(("unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
 			if (sffs_write_metadata(fs, file->block.begin, 0, size - SFFS_HEADER_SIZE, 0, 0) == -1)
 				return -1;
 			if (sffs_commit_metadata(fs, file->block.begin) == -1)
@@ -316,7 +316,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 
 	if (remove_me >= 0) {
 		/*removing old copy*/
-		//sffs_unlink_at(fs, remove_me);
+		sffs_unlink_at(fs, remove_me);
 	}
 	return size;
 }
