@@ -2,7 +2,7 @@ Simple Fault-tolerant File System, version 1
 
 This tiny filesystem was designed to be the most safe in a world of one-byte 
 unbuffered serial write to NVRAM. Writing into such NVRAM splitted into 
-1-byte commands and could be interrupted at any single byte without losing
+single-byte commands and could be interrupted at any single byte without losing
 your precious data.
 
 This was quite an interesting experience and I hope you'll find it useful.
