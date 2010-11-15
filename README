@@ -1,6 +1,6 @@
-This tiny filesystem was designed by me to be the most safe in a world of 
-one-byte unbuffered serial write to NVRAM. Writing into such NVRAM is meant
-to be unbuffered and could be interrupted at any single byte without losing
+This tiny filesystem was designed to be the most safe in a world of one-byte 
+unbuffered serial write to NVRAM. Writing into such NVRAM meant to be 
+unbuffered and could be interrupted at any single byte without losing
 your precious data.
 
 This was quite an interesting experience and I hope you'll find it useful.
