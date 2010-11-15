@@ -251,12 +251,14 @@ static struct sffs_block *find_best_free(struct sffs *fs, size_t full_size) {
 	struct sffs_block *free_end = (struct sffs_block *)(fs->free.ptr + fs->free.size);
 	struct sffs_block *free, *best_free = 0;
 	size_t best_size = 0;
+	uint32_t best_mtime = 0;
 	for(free = free_begin; free < free_end; ++free) {
 		size_t free_size = free->end - free->begin;
 		if (free_size >= full_size) {
-			if (!best_free || free_size < best_size) {
+			if (!best_free || free_size < best_size || best_mtime > free->mtime) {
 				best_free = free;
 				best_size = free_size;
+				best_mtime = free->mtime;
 			}
 		}
 	}
