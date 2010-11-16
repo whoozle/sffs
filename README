@@ -1,11 +1,10 @@
 Simple Fault-tolerant File System, version 1
 
-This tiny filesystem was designed to be the most safe in a world of one-byte 
-unbuffered serial write to NVRAM. Writing into such NVRAM splitted into 
-single-byte commands and could be interrupted at any single byte without losing
-your precious data.
+This tiny filesystem was designed to be the most safe in the world of SPI flash 
+filesystems. Writing into such flash splitted into single-byte commands and 
+could be interrupted at any single byte without losing your precious data.
 
-Also this filesystem will protect you from NVRAM wearing. It saves timestamps
+Also this filesystem will protect you from flash wearing. It saves timestamps
 of writes and always rotate files around the flash, so you never got the same
 file written again and again on the same place.
 
