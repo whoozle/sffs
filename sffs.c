@@ -24,6 +24,7 @@ static int sffs_block_compare(const void *a, const void *b) {
 static int sffs_vector_resize(struct sffs_vector *vec, size_t new_size) {
 	uint8_t *p = (uint8_t *)realloc(vec->ptr, new_size);
 	if (!p && new_size) {
+		LOG_ERROR(("realloc(%p, %zu) failed", vec->ptr, new_size));
 		return -1;
 	}
 	vec->ptr = p;
@@ -79,8 +80,10 @@ static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
 		0, 0, 0, 0, 0, 0, /*mtime + padding + fname len */
 	};
 
-	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
+		LOG_ERROR(("seek(%zu, SEEK_SET) failed", offset));
 		return -1;
+	}
 	
 	/* *((uint32_t *)&header[10]) = htole32(time(0)); //splitting block is not considered as modification to avoid fragmentation.*/
 	*((uint32_t *)&header[1]) = htole32(size - sizeof(header));
@@ -89,11 +92,15 @@ static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
 }
 
 static int sffs_write_at(struct sffs *fs, off_t offset, const void *data, size_t size) {
-	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
+		LOG_ERROR(("seek(%zu, SEEK_SET) failed", offset));
 		return -1;
+	}
 
-	if (fs->write(data, size) != size)
+	if (fs->write(data, size) != size) {
+		LOG_ERROR(("write(%p, %zu) failed", data, size));
 		return -1;
+	}
 
 	return 0;
 }
@@ -102,11 +109,15 @@ static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uin
 	uint8_t header[10], header_offset;
 	uint8_t header2[4 + 1 + 1]; /*timestamp + padding + filename len*/
 	
-	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
+		LOG_ERROR(("seek(%zu, SEEK_SET) failed", offset));
 		return -1;
+	}
 
-	if (fs->read(header, sizeof(header)) != sizeof(header))
+	if (fs->read(header, sizeof(header)) != sizeof(header)) {
+		LOG_ERROR(("read(header) failed"));
 		return -1;
+	}
 	
 	header_offset = (header[0] & 0x80)? 5: 0;
 	header_offset = 5 - header_offset;
@@ -130,18 +141,26 @@ static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uin
 
 static int sffs_commit_metadata(struct sffs *fs, off_t offset) {
 	uint8_t flag;
-	if (fs->seek(offset, SEEK_SET) == (off_t)-1)
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
+		LOG_ERROR(("seek(%zu, SEEK_SET) failed", offset));
 		return -1;
+	}
 
-	if (fs->read(&flag, 1) != 1)
+	if (fs->read(&flag, 1) != 1) {
+		LOG_ERROR(("reading flag failed"));
 		return -1;
+	}
 
 	flag ^= 0x80;
-	if (fs->seek(-1, SEEK_CUR) == (off_t)-1)
+	if (fs->seek(-1, SEEK_CUR) == (off_t)-1) {
+		LOG_ERROR(("seek(-1, SEEK_CUR) failed"));
 		return -1;
+	}
 	
-	if (fs->write(&flag, 1) != 1)
+	if (fs->write(&flag, 1) != 1) {
+		LOG_ERROR(("write(commit flag) failed"));
 		return -1;
+	}
 
 	return (flag & 0x80) != 0? 1: 0;
 }
@@ -316,8 +335,10 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	if (sffs_write_metadata(fs, offset, 0x40, size + fname_len + padding, fname_len, padding) == -1)
 		return -1;
 	/*write filename*/
-	if (fs->write(fname, fname_len) != fname_len)
+	if (fs->write(fname, fname_len) != fname_len) {
+		LOG_ERROR(("error writing filename (len: %zu)", fname_len));
 		return -1;
+	}
 	/*commit*/
 	if (sffs_commit_metadata(fs, offset) == -1)
 		return -1;
@@ -331,7 +352,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 
 ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 	struct sffs_entry *file;
-	long pos = sffs_find_file(fs, fname);
+	long pos = sffs_find_file(fs, fname), offset;
 
 	if (pos < 0)
 		return -1;
@@ -340,8 +361,11 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 	if (size > file->size)
 		size = file->size;
 	
-	if (fs->seek(file->block.begin + SFFS_HEADER_SIZE + strlen(fname), SEEK_SET) == (off_t)-1)
+	offset = file->block.begin + SFFS_HEADER_SIZE + strlen(fname);
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
+		LOG_ERROR(("seek(%ld, SEEK_SET) failed", offset));
 		return -1;
+	}
 	return fs->read(data, size);
 }
 
@@ -366,16 +390,19 @@ int sffs_format(struct sffs *fs) {
 int sffs_mount(struct sffs *fs) {
 	off_t size = fs->seek(0, SEEK_END);
 
-	if (size == (off_t)-1)
+	if (size == (off_t)-1) {
+		LOG_ERROR(("cannot obtain device size: seek(0, SEEK_END) failed"));
 		return -1;
+	}
 
 	LOG_DEBUG(("SFFS: device size: %zu bytes", size));
 	fs->device_size = size;
 	
-	/*reading journal*/
 	size = fs->seek(0, SEEK_SET);
-	if (size == (off_t)-1)
+	if (size == (off_t)-1) {
+		LOG_ERROR(("seek(0, SEEK_SET) failed"));
 		return -1;
+	}
 	
 	fs->files.ptr = 0;
 	fs->files.size = 0;
@@ -419,9 +446,11 @@ int sffs_mount(struct sffs *fs) {
 			file = (struct sffs_entry *)((char *)fs->files.ptr + file_offset);
 			file->name = malloc(filename_len + 1);
 			if (!file->name) {
+				LOG_ERROR(("filename allocation failed(%u)", (unsigned)filename_len));
 				return -1;
 			}
 			if (fs->read(file->name, filename_len) != filename_len) {
+				LOG_ERROR(("read(%u) failed", (unsigned)filename_len));
 				return -1;
 			}
 			file->size = block_size - filename_len - padding;
