@@ -1,5 +1,4 @@
 #include "sffs.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <endian.h>
 #include <string.h>
@@ -25,7 +24,6 @@ static int sffs_block_compare(const void *a, const void *b) {
 static int sffs_vector_resize(struct sffs_vector *vec, size_t new_size) {
 	uint8_t *p = (uint8_t *)realloc(vec->ptr, new_size);
 	if (!p && new_size) {
-		perror("realloc");
 		return -1;
 	}
 	vec->ptr = p;
@@ -37,7 +35,6 @@ static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t s
 	size_t new_size = vec->size + size;
 	uint8_t *p = (uint8_t *)realloc(vec->ptr, new_size), *entry;
 	if (!p) {
-		perror("realloc");
 		return 0;
 	}
 	vec->ptr = p;
@@ -405,7 +402,7 @@ int sffs_mount(struct sffs *fs) {
 		
 		if (block.end == (off_t)-1) {
 			LOG_ERROR(("SFFS: out of bounds"));
-			return 1;
+			return -1;
 		}
 		
 		if (committed) {
@@ -417,16 +414,15 @@ int sffs_mount(struct sffs *fs) {
 				break;
 		
 			if (sffs_vector_resize(&fs->files, file_offset + sizeof(struct sffs_entry)) == -1)
-				return 1;
+				return -1;
 			
 			file = (struct sffs_entry *)((char *)fs->files.ptr + file_offset);
 			file->name = malloc(filename_len + 1);
 			if (!file->name) {
-				perror("malloc");
-				return 1;
+				return -1;
 			}
 			if (fs->read(file->name, filename_len) != filename_len) {
-				return 1;
+				return -1;
 			}
 			file->size = block_size - filename_len - padding;
 			file->name[filename_len] = 0;
@@ -436,7 +432,7 @@ int sffs_mount(struct sffs *fs) {
 			struct sffs_block *free;
 			size_t free_offset = fs->free.size;
 			if (sffs_vector_resize(&fs->free, free_offset + sizeof(struct sffs_block)) == -1)
-				return 1;
+				return -1;
 			free = (struct sffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
 			LOG_DEBUG(("SFFS: free space %zu->%zu", block.begin, block.end));
