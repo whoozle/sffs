@@ -3,6 +3,8 @@
 #include <endian.h>
 #include <string.h>
 #include <time.h>
+/*SEEK_XXX macros. Consider to move 'em to sffs.h with similar name*/
+#include <unistd.h>
 
 #define SFFS_HEADER_SIZE (16)
 
