@@ -120,7 +120,9 @@ int main(int argc, char **argv) {
 			close(src_fd);
 			printf("writing file %s\n", argv[f]);
 			
-			sffs_write(&fs, argv[f], src_data, src_size);
+			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
+				goto next;
+			
 			memset(src_data, '@', src_size);
 			sffs_read(&fs, argv[f], src_data, src_size);
 			fwrite(src_data, 1, src_size, stdout);
