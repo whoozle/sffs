@@ -56,6 +56,8 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size);
 int sffs_unlink(struct sffs *fs, const char *fname);
 int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf);
 const char* sffs_filename(struct sffs *fs, size_t index);
+size_t sffs_get_largest_free(struct sffs *fs);
+size_t sffs_get_total_free(struct sffs *fs);
 
 #ifdef __cplusplus
 }

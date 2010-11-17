@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 		return 0;
 	} else if (strcmp(argv[2], "list") == 0) {
 		const char *name;
-		size_t i;
+		size_t i, total, max;
 
 		if (argc < 3) {
 			printf("usage: list imagefile\n");
@@ -75,9 +75,14 @@ int main(int argc, char **argv) {
 
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
+
 		for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
 			printf("%s\n", name);
 		}
+		
+		max = sffs_get_largest_free(&fs);
+		total = sffs_get_total_free(&fs);
+		printf("Free blocks, total: %zu, largest: %zu\n", total, max);
 
 		sffs_umount(&fs);
 	} else if (strcmp(argv[2], "write") == 0) {

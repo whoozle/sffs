@@ -281,6 +281,32 @@ static struct sffs_block *find_best_free(struct sffs *fs, size_t full_size) {
 	return best_free;
 }
 
+size_t sffs_get_largest_free(struct sffs *fs) {
+	struct sffs_block *free_begin = (struct sffs_block *)fs->free.ptr;
+	struct sffs_block *free_end = (struct sffs_block *)(fs->free.ptr + fs->free.size);
+	struct sffs_block *free;
+	size_t largest = 0;
+
+	for(free = free_begin; free < free_end; ++free) {
+		size_t size = free->end - free->begin;
+		if (size > largest)
+			largest = size;
+	}
+	return largest;
+}
+
+size_t sffs_get_total_free(struct sffs *fs) {
+	struct sffs_block *free_begin = (struct sffs_block *)fs->free.ptr;
+	struct sffs_block *free_end = (struct sffs_block *)(fs->free.ptr + fs->free.size);
+	struct sffs_block *free;
+	size_t total = 0;
+
+	for(free = free_begin; free < free_end; ++free) {
+		total += free->end - free->begin;
+	}
+	return total;
+}
+
 ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t size) {
 	size_t fname_len = strlen(fname), header_size, full_size, best_size, tail_size;
 	struct sffs_entry *file;
