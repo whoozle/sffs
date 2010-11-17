@@ -421,6 +421,8 @@ int sffs_mount(struct sffs *fs) {
 		uint8_t header[SFFS_HEADER_SIZE];
 
 		block.begin = fs->seek(0, SEEK_CUR); /* tell */
+		if (block.begin >= fs->device_size)
+			break;
 		
 		if (fs->read(header, sizeof(header)) != sizeof(header))
 			break;
@@ -480,6 +482,10 @@ int sffs_mount(struct sffs *fs) {
 			LOG_ERROR(("SFFS: block end %zu is out of bounds", block.end));
 			break;
 		}
+	}
+	if (fs->files.size == 0 && fs->free.size == 0) {
+		LOG_ERROR(("SFFS: corrupted file system: no free blocks and files."));
+		return -1;
 	}
 	
 	{
