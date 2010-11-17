@@ -484,7 +484,7 @@ int sffs_mount(struct sffs *fs) {
 		}
 	}
 	if (fs->files.size == 0 && fs->free.size == 0) {
-		LOG_ERROR(("SFFS: corrupted file system: no free blocks and files."));
+		LOG_ERROR(("SFFS: corrupted file system: no free blocks or files."));
 		return -1;
 	}
 	
