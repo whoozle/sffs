@@ -297,7 +297,6 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		remove_me = pos + 1;
 		LOG_DEBUG(("SFFS: old file in position %ld", remove_me));
 	}
-	LOG_DEBUG(("SFFS: creating file in positon %ld", pos));
 	file = (struct sffs_entry *)sffs_vector_insert(&fs->files, pos, sizeof(struct sffs_entry));
 	if (!file) {
 		LOG_ERROR(("SFFS: inserting file struct failed!"));
@@ -327,6 +326,11 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		padding = tail_size;
 		sffs_vector_remove(&fs->free, best_free - (struct sffs_block *)fs->free.ptr, sizeof(struct sffs_block));
 	}
+	LOG_DEBUG(("SFFS: creating file in positon %ld -> %lu", pos, (unsigned long)offset));
+	file->block.begin = offset;
+	file->block.end = offset + size + fname_len + padding;
+	file->padding = padding;
+	file->size = size;
 
 	/*writing data*/
 	if (sffs_write_at(fs, offset + header_size, data, size) == -1)
@@ -362,6 +366,7 @@ ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 		size = file->size;
 	
 	offset = file->block.begin + SFFS_HEADER_SIZE + strlen(fname);
+	LOG_DEBUG(("reading from offset: %lu, size: %zu", (unsigned long)offset, size));
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
 		LOG_ERROR(("seek(%ld, SEEK_SET) failed", offset));
 		return -1;
