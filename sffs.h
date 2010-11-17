@@ -31,7 +31,6 @@ struct sffs_entry {
 	size_t size;
 	uint8_t padding;
 	struct sffs_block block;
-	struct sffs_entry *next;
 };
 
 struct sffs_vector {
