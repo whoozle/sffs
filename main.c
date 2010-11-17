@@ -127,11 +127,11 @@ int main(int argc, char **argv) {
 			
 			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
-			
+#if 0
 			memset(src_data, '@', src_size);
 			sffs_read(&fs, argv[f], src_data, src_size);
 			fwrite(src_data, 1, src_size, stdout);
-		
+#endif
 		next:
 			free(src_data);
 			close(src_fd);
