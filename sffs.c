@@ -531,5 +531,9 @@ int sffs_mount(struct sffs *fs) {
 
 
 int sffs_umount(struct sffs *fs) {
+	free(fs->files.ptr);
+	fs->files.ptr = 0;
+	free(fs->free.ptr);
+	fs->free.ptr = 0;
 	return 0;
 }
