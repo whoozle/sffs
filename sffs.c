@@ -113,7 +113,7 @@ static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uin
 	uint8_t header2[4 + 1 + 1]; /*timestamp + padding + filename len*/
 	
 	if (size > fs->device_size) {
-		LOG_ERROR(("cancelling sffs_write_metadata(0x%zx, %02x, %zu), do not corrupting filesystem!", offset, flags, size));
+		LOG_ERROR(("cancelling sffs_write_metadata(0x%zx, %02x, %zu), do not corrupt filesystem!", offset, flags, size));
 		return -1;
 	}
 	
