@@ -194,7 +194,6 @@ int main(int argc, char **argv) {
 		sffs_write(&fs, "f2", buf, 4);
 		sffs_write(&fs, "f3", buf, 4);
 		sffs_write(&fs, "f1", buf, 4);
-		/*
 		sffs_write(&fs, "f2", buf, 4);
 		sffs_write(&fs, "f3", buf, 30);
 		sffs_write(&fs, "f1", buf, 4);
@@ -206,7 +205,7 @@ int main(int argc, char **argv) {
 		sffs_write(&fs, "f1", buf, 4);
 		sffs_write(&fs, "f2", buf, 4);
 		sffs_write(&fs, "f3", buf, 120);
-		*/
+		
 		sffs_umount(&fs);
 	} else {
 		printf("unknown command: %s\n", argv[2]);

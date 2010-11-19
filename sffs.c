@@ -35,7 +35,6 @@ static int sffs_vector_resize(struct sffs_vector *vec, size_t new_size) {
 }
 
 static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t size) {
-	//LOG_DEBUG(("sffs_vector_insert(%zu, %zu)", pos, size));
 	size_t new_size = vec->size + size;
 	uint8_t *p = (uint8_t *)realloc(vec->ptr, new_size), *entry;
 	if (!p) {
@@ -318,7 +317,7 @@ size_t sffs_get_total_free(struct sffs *fs) {
 }
 
 ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t size) {
-	size_t fname_len = strlen(fname), header_size, full_size, best_size, tail_size;
+	size_t fname_len = strlen(fname), best_size, full_size, tail_size;
 	struct sffs_entry *file;
 	long remove_me;
 	struct sffs_block *best_free;
@@ -341,8 +340,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	/*LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct sffs_entry *)fs->files.ptr)[pos].name, ((struct sffs_entry *)fs->files.ptr)[pos + 1].name));*/
 
 	file->name = strdup(fname);
-	header_size = fname_len + SFFS_HEADER_SIZE; /* 2 * (flags + size) + mtime + padding + fname len + filename */
-	full_size = size + header_size;
+	full_size = SFFS_HEADER_SIZE + fname_len + size;
 	best_free = find_best_free(fs, full_size);
 	if (!best_free) {
 		LOG_ERROR(("SFFS: no space left on device"));
@@ -355,25 +353,26 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	if (tail_size > SFFS_HEADER_SIZE) {
 		/*mark up empty block inside*/
 		best_free->begin = offset + full_size;
-		if (sffs_write_empty_header(fs, best_free->begin, tail_size) == -1) 
+		if (sffs_write_empty_header(fs, best_free->begin, tail_size - SFFS_HEADER_SIZE) == -1) 
 			return -1;
 		padding = 0;
 	} else {
 		/* tail_size == SFFS_HEADER_SIZE or less */
 		padding = tail_size;
+		full_size += padding;
 		sffs_vector_remove(&fs->free, best_free - (struct sffs_block *)fs->free.ptr, sizeof(struct sffs_block));
 	}
 	LOG_DEBUG(("SFFS: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
 	file->block.begin = offset;
-	file->block.end = offset + size + fname_len + padding;
+	file->block.end = offset + full_size;
 	file->padding = padding;
 	file->size = size;
 
 	/*writing data*/
-	if (sffs_write_at(fs, offset + header_size, data, size) == -1)
+	if (sffs_write_at(fs, offset + SFFS_HEADER_SIZE + fname_len, data, size) == -1)
 		return -1;
 	/*writing metadata*/
-	if (sffs_write_metadata(fs, offset, 0x40, size + fname_len + padding, fname_len, padding) == -1)
+	if (sffs_write_metadata(fs, offset, 0x40, full_size - SFFS_HEADER_SIZE, fname_len, padding) == -1)
 		return -1;
 	/*write filename*/
 	if (fs->write(fname, fname_len) != fname_len) {
@@ -425,7 +424,7 @@ int sffs_stat(struct sffs *fs, const char *fname, struct stat *buf) {
 }
 
 int sffs_format(struct sffs *fs) {
-	return sffs_write_empty_header(fs, 0, fs->device_size);
+	return sffs_write_empty_header(fs, 0, fs->device_size - SFFS_HEADER_SIZE);
 }
 
 
@@ -468,7 +467,7 @@ int sffs_mount(struct sffs *fs) {
 		committed = header[header_off] & 0x40;
 
 		block_size = le32toh(*(uint32_t *)(header + header_off + 1));
-		block.end = block.begin + sizeof(header) + block_size;
+		block.end = block.begin + SFFS_HEADER_SIZE + block_size;
 		block.mtime = (time_t)*(uint32_t *)&header[10];
 		
 		if (block.end == (off_t)-1) {
