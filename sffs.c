@@ -35,6 +35,7 @@ static int sffs_vector_resize(struct sffs_vector *vec, size_t new_size) {
 }
 
 static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t size) {
+	//LOG_DEBUG(("sffs_vector_insert(%zu, %zu)", pos, size));
 	size_t new_size = vec->size + size;
 	uint8_t *p = (uint8_t *)realloc(vec->ptr, new_size), *entry;
 	if (!p) {
@@ -110,6 +111,11 @@ static int sffs_write_at(struct sffs *fs, off_t offset, const void *data, size_t
 static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uint32_t size, uint8_t fname_len, uint8_t padding) {
 	uint8_t header[10], header_offset;
 	uint8_t header2[4 + 1 + 1]; /*timestamp + padding + filename len*/
+	
+	if (size > fs->device_size) {
+		LOG_ERROR(("cancelling sffs_write_metadata(0x%zx, %02x, %zu), do not corrupting filesystem!", offset, flags, size));
+		return -1;
+	}
 	
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
 		LOG_ERROR(("seek(%zu, SEEK_SET) failed", offset));
@@ -225,6 +231,7 @@ static int sffs_recover_and_remove_old_files(struct sffs *fs) {
 				return -1;
 			if (sffs_commit_metadata(fs, file->block.begin) == -1)
 				return -1;
+			free(file->name);
 			if (sffs_vector_remove(&fs->files, i, sizeof(struct sffs_entry)) == -1)
 				return -1;
 			--n;
@@ -237,21 +244,22 @@ static int sffs_recover_and_remove_old_files(struct sffs *fs) {
 
 static int sffs_unlink_at(struct sffs *fs, size_t pos) {
 	struct sffs_entry *file = ((struct sffs_entry *)fs->files.ptr) + pos;
-	struct sffs_block *free;
-
+	struct sffs_block *free_block;
+	LOG_DEBUG(("erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
 	if (sffs_write_metadata(fs, file->block.begin, 0, file->block.end - file->block.begin - SFFS_HEADER_SIZE, 0, 0) == -1)
 		return -1;
 	if (sffs_commit_metadata(fs, file->block.begin) == -1)
 		return -1;
 	
-	free = (struct sffs_block *)sffs_vector_append(&fs->free, sizeof(struct sffs_block));
-	*free = file->block;
+	free_block = (struct sffs_block *)sffs_vector_append(&fs->free, sizeof(struct sffs_block));
+	*free_block = file->block;
 	
 	{
 		size_t free_blocks = fs->free.size / sizeof(struct sffs_block);
 		qsort(fs->free.ptr, free_blocks, sizeof(struct sffs_block), sffs_block_compare);
 	}
 	
+	free(file->name);
 	sffs_vector_remove(&fs->files, pos, sizeof(struct sffs_entry));
 	return sffs_compact(fs);
 }
@@ -330,6 +338,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		LOG_ERROR(("SFFS: inserting file struct failed!"));
 		return -1;
 	}
+	/*LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct sffs_entry *)fs->files.ptr)[pos].name, ((struct sffs_entry *)fs->files.ptr)[pos + 1].name));*/
 
 	file->name = strdup(fname);
 	header_size = fname_len + SFFS_HEADER_SIZE; /* 2 * (flags + size) + mtime + padding + fname len + filename */
@@ -354,7 +363,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		padding = tail_size;
 		sffs_vector_remove(&fs->free, best_free - (struct sffs_block *)fs->free.ptr, sizeof(struct sffs_block));
 	}
-	LOG_DEBUG(("SFFS: creating file in positon %ld -> %lu", pos, (unsigned long)offset));
+	LOG_DEBUG(("SFFS: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
 	file->block.begin = offset;
 	file->block.end = offset + size + fname_len + padding;
 	file->padding = padding;
