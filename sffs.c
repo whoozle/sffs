@@ -198,9 +198,7 @@ static int sffs_compact(struct sffs *fs) {
 	--n;
 	for(i = 0; i < n; ) {
 		size_t j = i + 1;
-		LOG_DEBUG(("%zu - %zu", free[i].end, free[j].begin));
 		if (free[i].end == free[j].begin) {
-			LOG_DEBUG(("compacting!"));
 			free[i].end = free[j].end;
 			free[i].mtime = free[i].mtime > free[j].mtime? free[i].mtime: free[j].mtime;
 			if (sffs_write_metadata(fs, free + i, 0, 0, 0) == -1)
