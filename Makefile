@@ -1,4 +1,4 @@
-CFLAGS=-DLOG_STUBS -Wall -pedantic -ggdb
+CFLAGS=-DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x
 
 all: sffs-tool
 

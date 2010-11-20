@@ -1,10 +1,10 @@
 #include "sffs.h"
 #include <stdlib.h>
-#include <endian.h>
 #include <string.h>
 #include <time.h>
 /*SEEK_XXX macros. Consider to move 'em to sffs.h with similar name*/
 #include <unistd.h>
+#include <endian.h>
 
 #define SFFS_HEADER_SIZE (16)
 
@@ -107,17 +107,18 @@ static int sffs_write_at(struct sffs *fs, off_t offset, const void *data, size_t
 	return 0;
 }
 
-static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uint32_t size, uint8_t fname_len, uint8_t padding) {
+static int sffs_write_metadata(struct sffs *fs, struct sffs_block *block, uint8_t flags, uint8_t fname_len, uint8_t padding) {
 	uint8_t header[10], header_offset;
 	uint8_t header2[4 + 1 + 1]; /*timestamp + padding + filename len*/
 	
-	if (size > fs->device_size) {
-		LOG_ERROR(("cancelling sffs_write_metadata(0x%zx, %02x, %u), do not corrupt filesystem!", offset, flags, size));
+	uint32_t size = (uint32_t)(block->end - block->begin - SFFS_HEADER_SIZE);
+	if (block->begin + size > fs->device_size) {
+		LOG_ERROR(("cancelling sffs_write_metadata(0x%zx, %02x, %u), do not corrupt filesystem!", block->begin, flags, size));
 		return -1;
 	}
 	
-	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
-		LOG_ERROR(("seek(%zu, SEEK_SET) failed", offset));
+	if (fs->seek(block->begin, SEEK_SET) == (off_t)-1) {
+		LOG_ERROR(("seek(%zu, SEEK_SET) failed", block->begin));
 		return -1;
 	}
 
@@ -132,15 +133,15 @@ static int sffs_write_metadata(struct sffs *fs, off_t offset, uint8_t flags, uin
 	header[header_offset] |= flags;
 	*((uint32_t *)&header[header_offset + 1]) = htole32(size);
 	
-	if (sffs_write_at(fs, offset + header_offset, header + header_offset, 5) == -1)
+	if (sffs_write_at(fs, block->begin + header_offset, header + header_offset, 5) == -1)
 		return -1;
 	
 	/* update timestamp */
-	*((uint32_t *)header2) = htole32(time(0));
+	*((uint32_t *)header2) = htole32(block->mtime);
 	header2[4] = padding;
 	header2[5] = fname_len;
 
-	if (sffs_write_at(fs, offset + 10, header2, 6) == -1)
+	if (sffs_write_at(fs, block->begin + 10, header2, 6) == -1)
 		return -1;
 
 	return 0;
@@ -198,8 +199,8 @@ static int sffs_compact(struct sffs *fs) {
 	for(i = 0; i < n; ) {
 		size_t j = i + 1;
 		if (free[i].end == free[j].begin) {
-			size_t size = free[j].end - free[i].begin;
-			if (sffs_write_metadata(fs, free[i].begin, 0, size - SFFS_HEADER_SIZE, 0, 0) == -1)
+			free[i].mtime = free[i].mtime > free[j].mtime? free[i].mtime: free[j].mtime;
+			if (sffs_write_metadata(fs, free + i, 0, 0, 0) == -1)
 				return -1;
 			if (sffs_commit_metadata(fs, free[i].begin) == -1)
 				return -1;
@@ -220,13 +221,14 @@ static int sffs_recover_and_remove_old_files(struct sffs *fs) {
 	if (n < 2)
 		return 0;
 	--n;
+	uint32_t timestamp = (uint32_t)time(0);
 	for(i = 0; i < n; ) {
 		size_t j = i + 1;
 		struct sffs_entry *file = files + i;
 		if (strcmp(file->name, files[j].name) == 0) {
-			size_t size = file->block.end - file->block.begin;
+			file->block.mtime = timestamp;
 			LOG_INFO(("unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
-			if (sffs_write_metadata(fs, file->block.begin, 0, size - SFFS_HEADER_SIZE, 0, 0) == -1)
+			if (sffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 				return -1;
 			if (sffs_commit_metadata(fs, file->block.begin) == -1)
 				return -1;
@@ -245,7 +247,8 @@ static int sffs_unlink_at(struct sffs *fs, size_t pos) {
 	struct sffs_entry *file = ((struct sffs_entry *)fs->files.ptr) + pos;
 	struct sffs_block *free_block;
 	LOG_DEBUG(("erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
-	if (sffs_write_metadata(fs, file->block.begin, 0, file->block.end - file->block.begin - SFFS_HEADER_SIZE, 0, 0) == -1)
+	file->block.mtime = (uint32_t)time(0);
+	if (sffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 		return -1;
 	if (sffs_commit_metadata(fs, file->block.begin) == -1)
 		return -1;
@@ -372,7 +375,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	if (sffs_write_at(fs, offset + SFFS_HEADER_SIZE + fname_len, data, size) == -1)
 		return -1;
 	/*writing metadata*/
-	if (sffs_write_metadata(fs, offset, 0x40, full_size - SFFS_HEADER_SIZE, fname_len, padding) == -1)
+	if (sffs_write_metadata(fs, &file->block, 0x40, fname_len, padding) == -1)
 		return -1;
 	/*write filename*/
 	if (fs->write(fname, fname_len) != fname_len) {

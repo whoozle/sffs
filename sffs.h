@@ -23,7 +23,7 @@ typedef off_t (*seek_func)(off_t offset, int whence);
 struct sffs_block {
 	off_t begin;
 	off_t end;
-	time_t mtime;
+	uint32_t mtime;
 };
 
 struct sffs_entry {
