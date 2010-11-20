@@ -252,6 +252,7 @@ int main(int argc, char **argv) {
 	} else if (strcmp(argv[2], "wear") == 0) {
 		char buf[0x100];
 		size_t i;
+		unsigned long total = 0;
 		for(i = 0; i < sizeof(buf); ++i) 
 			buf[i] = i;
 
@@ -273,8 +274,11 @@ int main(int argc, char **argv) {
 		}
 		
 		for(i = 0; i < EMU_DEVICE_SIZE; ++i) {
-			printf("%u\n", emu_device_stat[i]);
+			uint32_t hits = emu_device_stat[i];
+			printf("%u;\n", hits);
+			total += hits;
 		}
+		printf(";total %lu -> ~%g writes average\n", total, 1.0f * total / EMU_DEVICE_SIZE);
 
 		sffs_umount(&fs);
 		
