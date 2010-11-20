@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <assert.h>
 
 static int fd;
 
@@ -18,6 +19,46 @@ static ssize_t fs_read_func(void *ptr, size_t size) {
 
 static off_t fs_seek_func(off_t offset, int whence) {
 	return lseek(fd, offset, whence);
+}
+
+#define EMU_DEVICE_SIZE (0x10000)
+
+static uint8_t emu_device[EMU_DEVICE_SIZE];
+static unsigned emu_device_stat[EMU_DEVICE_SIZE];
+static unsigned emu_device_pos;
+
+static ssize_t emu_write_func(const void *ptr, size_t size) {
+	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
+	for(size_t i = 0; i < size; ++i)
+		++emu_device_stat[emu_device_pos + i];
+	memcpy(emu_device + emu_device_pos, ptr, size);
+	emu_device_pos += size;
+	return size;
+}
+
+static ssize_t emu_read_func(void *ptr, size_t size) {
+	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
+	memcpy(ptr, emu_device + emu_device_pos, size);
+	emu_device_pos += size;
+	return size;
+}
+
+static off_t emu_seek_func(off_t offset, int whence) {
+	switch(whence) {
+	case SEEK_SET:
+		emu_device_pos = offset;
+		break;
+	case SEEK_CUR:
+		emu_device_pos += offset;
+		break;
+	case SEEK_END:
+		emu_device_pos = EMU_DEVICE_SIZE + offset;
+		break;
+	default:
+		assert(0);
+	}
+	assert(emu_device_pos <= EMU_DEVICE_SIZE);
+	return emu_device_pos;
 }
 
 static int mount_image(struct sffs *fs, const char *fname) {
@@ -184,7 +225,8 @@ int main(int argc, char **argv) {
 
 		sffs_umount(&fs);
 	} else if (strcmp(argv[2], "test") == 0) {
-		char i, buf[120];
+		char buf[120];
+		int i;
 		for(i = 0; i < 120; ++i) 
 			buf[i] = i;
 		if (mount_image(&fs, argv[1]) == -1)
@@ -207,6 +249,35 @@ int main(int argc, char **argv) {
 		sffs_write(&fs, "f3", buf, 120);
 		
 		sffs_umount(&fs);
+	} else if (strcmp(argv[2], "wear") == 0) {
+		char buf[0x100];
+		size_t i;
+		for(i = 0; i < sizeof(buf); ++i) 
+			buf[i] = i;
+
+		fs.read = emu_read_func;
+		fs.write = emu_write_func;
+		fs.seek = emu_seek_func;
+		fs.device_size = EMU_DEVICE_SIZE;
+		if (sffs_format(&fs) == -1)
+			return 2;
+
+		if (sffs_mount(&fs) == -1)
+			return 2;
+		
+		for(i = 0; i < EMU_DEVICE_SIZE; ++i) {
+			size_t fsize = rand() & 0xff;
+			char name[2] = {'a' + (rand() % 26), 0};
+			if (sffs_write(&fs, name, buf, fsize) == -1) 
+				break;
+		}
+		
+		for(i = 0; i < EMU_DEVICE_SIZE; ++i) {
+			printf("%u\n", emu_device_stat[i]);
+		}
+
+		sffs_umount(&fs);
+		
 	} else {
 		printf("unknown command: %s\n", argv[2]);
 	}
