@@ -147,10 +147,10 @@ static int sffs_write_metadata(struct sffs *fs, struct sffs_block *block, uint8_
 	return 0;
 }
 
-static int sffs_commit_metadata(struct sffs *fs, off_t offset) {
+static int sffs_commit_metadata(struct sffs *fs, struct sffs_block *block) {
 	uint8_t flag;
-	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
-		LOG_ERROR(("seek(%zu, SEEK_SET) failed", offset));
+	if (fs->seek(block->begin, SEEK_SET) == (off_t)-1) {
+		LOG_ERROR(("seek(%zu, SEEK_SET) failed", block->begin));
 		return -1;
 	}
 
@@ -198,13 +198,15 @@ static int sffs_compact(struct sffs *fs) {
 	--n;
 	for(i = 0; i < n; ) {
 		size_t j = i + 1;
+		LOG_DEBUG(("%zu - %zu", free[i].end, free[j].begin));
 		if (free[i].end == free[j].begin) {
+			LOG_DEBUG(("compacting!"));
+			free[i].end = free[j].end;
 			free[i].mtime = free[i].mtime > free[j].mtime? free[i].mtime: free[j].mtime;
 			if (sffs_write_metadata(fs, free + i, 0, 0, 0) == -1)
 				return -1;
-			if (sffs_commit_metadata(fs, free[i].begin) == -1)
+			if (sffs_commit_metadata(fs, free + i) == -1)
 				return -1;
-			free[i].end = free[j].end;
 			if (sffs_vector_remove(&fs->free, j, sizeof(struct sffs_block)) == -1)
 				return -1;
 			--n;
@@ -230,7 +232,7 @@ static int sffs_recover_and_remove_old_files(struct sffs *fs) {
 			LOG_INFO(("unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
 			if (sffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 				return -1;
-			if (sffs_commit_metadata(fs, file->block.begin) == -1)
+			if (sffs_commit_metadata(fs, &file->block) == -1)
 				return -1;
 			free(file->name);
 			if (sffs_vector_remove(&fs->files, i, sizeof(struct sffs_entry)) == -1)
@@ -250,7 +252,7 @@ static int sffs_unlink_at(struct sffs *fs, size_t pos) {
 	file->block.mtime = (uint32_t)time(0);
 	if (sffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 		return -1;
-	if (sffs_commit_metadata(fs, file->block.begin) == -1)
+	if (sffs_commit_metadata(fs, &file->block) == -1)
 		return -1;
 	
 	free_block = (struct sffs_block *)sffs_vector_append(&fs->free, sizeof(struct sffs_block));
@@ -384,7 +386,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 		return -1;
 	}
 	/*commit*/
-	if (sffs_commit_metadata(fs, offset) == -1)
+	if (sffs_commit_metadata(fs, &file->block) == -1)
 		return -1;
 
 	if (remove_me >= 0) {
