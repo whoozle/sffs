@@ -278,7 +278,7 @@ int main(int argc, char **argv) {
 			printf("%u;\n", hits);
 			total += hits;
 		}
-		printf(";total %lu -> ~%g writes average\n", total, 1.0f * total / EMU_DEVICE_SIZE);
+		fprintf(stderr, ";total %lu -> ~%g writes average\n", total, 1.0f * total / EMU_DEVICE_SIZE);
 
 		sffs_umount(&fs);
 		
