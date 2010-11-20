@@ -88,7 +88,7 @@ static int sffs_write_empty_header(struct sffs *fs, off_t offset, size_t size) {
 	}
 	
 	/* *((uint32_t *)&header[10]) = htole32(time(0)); //splitting block is not considered as modification to avoid fragmentation.*/
-	*((uint32_t *)&header[1]) = htole32(size - sizeof(header));
+	*((uint32_t *)&header[1]) = htole32(size);
 
 	return (fs->write(&header, sizeof(header)) == sizeof(header))? 0: -1;
 }
@@ -368,6 +368,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	LOG_DEBUG(("SFFS: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
 	file->block.begin = offset;
 	file->block.end = offset + full_size;
+	file->block.mtime = (uint32_t)time(0);
 	file->padding = padding;
 	file->size = size;
 
