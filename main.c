@@ -81,6 +81,7 @@ int main(int argc, char **argv) {
 	fs.read = fs_read_func;
 	fs.seek = fs_seek_func;
 
+//CREATE FILESYSTEM
 	if (strcmp(argv[2], "createfs") == 0) {
 		if (argc < 4) {
 			printf("usage: createfs filename size\n");
@@ -105,28 +106,10 @@ int main(int argc, char **argv) {
 				perror("truncate");
 		}
 		return 0;
-	} else if (strcmp(argv[2], "list") == 0) {
-		const char *name;
-		size_t i, total, max;
+	} 
 
-		if (argc < 3) {
-			printf("usage: list imagefile\n");
-			return 0;
-		}
-
-		if (mount_image(&fs, argv[1]) == -1)
-			return 2;
-
-		for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
-			printf("%s\n", name);
-		}
-		
-		max = sffs_get_largest_free(&fs);
-		total = sffs_get_total_free(&fs);
-		printf("Free blocks, total: %zu, largest: %zu\n", total, max);
-
-		sffs_umount(&fs);
-	} else if (strcmp(argv[2], "write") == 0) {
+//WRITE TO FILESYSTEM
+	 else if (strcmp(argv[2], "write") == 0) {
 		int f;
 	
 		if (argc < 4) {
@@ -182,7 +165,10 @@ int main(int argc, char **argv) {
 		sffs_umount(&fs);
 		
 		close(fd);
-	} else if (strcmp(argv[2], "read") == 0) {
+	} 
+	
+//READ FROM FILESYSTEM	
+	else if (strcmp(argv[2], "read") == 0) {
 		int f;
 		if (argc < 4) {
 			printf("usage: read imagefile file\n");
@@ -210,7 +196,34 @@ int main(int argc, char **argv) {
 			free(src);
 		}
 		sffs_umount(&fs);
-	} else if (strcmp(argv[2], "remove") == 0) {
+	} 	
+
+//LIST OBJECTS IN FILESYSTEM
+	else if (strcmp(argv[2], "list") == 0) {
+		const char *name;
+		size_t i, total, max;
+
+		if (argc < 3) {
+			printf("usage: list imagefile\n");
+			return 0;
+		}
+
+		if (mount_image(&fs, argv[1]) == -1)
+			return 2;
+
+		for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
+			printf("%s\n", name);
+		}
+		
+		max = sffs_get_largest_free(&fs);
+		total = sffs_get_total_free(&fs);
+		printf("Free blocks, total: %zu, largest: %zu\n", total, max);
+
+		sffs_umount(&fs);
+	}
+
+//REMOVE ITEM FROM FILESYSTEM	
+	else if (strcmp(argv[2], "remove") == 0) {
 		int f;
 		if (argc < 4) {
 			printf("usage: remove imagefile file\n");
@@ -224,7 +237,10 @@ int main(int argc, char **argv) {
 		}
 
 		sffs_umount(&fs);
-	} else if (strcmp(argv[2], "test") == 0) {
+	} 
+
+//TEST THE FILESYSTEM
+else if (strcmp(argv[2], "test") == 0) {
 		char buf[120];
 		int i;
 		for(i = 0; i < 120; ++i) 
@@ -249,7 +265,10 @@ int main(int argc, char **argv) {
 		sffs_write(&fs, "f3", buf, 120);
 		
 		sffs_umount(&fs);
-	} else if (strcmp(argv[2], "wear") == 0) {
+	} 
+
+//CHECK FILESYSTEM WEAR
+	else if (strcmp(argv[2], "wear") == 0) {
 		char buf[0x100];
 		size_t i;
 		unsigned long total = 0;
@@ -282,7 +301,10 @@ int main(int argc, char **argv) {
 
 		sffs_umount(&fs);
 		
-	} else {
+	} 
+
+//HANDLES BAD INPUT
+	else {
 		printf("unknown command: %s\n", argv[2]);
 	}
 	
