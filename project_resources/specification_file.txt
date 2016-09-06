@@ -10,20 +10,19 @@ Design and implement an atomic C-based embedded file system easily adaptable for
 
 4. Project Description: The solution:
    * SHALL be written in ANSI C
-* SHALL be suitable for running on an embedded system
+X SHALL be suitable for running on an embedded system
 o SHOULD be suitable to run on low-resourced systems (CPU, RAM)
 o SHOULD offer efficient storage in file system
 o SHOULD have small file system code size
 * SHALL be optimized for Flash storage (or SSD)
-o SHOULD support both NOR and NAND Flash
-* SHALL wrap a currently maintained, mature, open-source file system
+X only NOR? SHOULD support both NOR and NAND Flash
+X SHALL wrap a currently maintained, mature, open-source file system
 o SHALL be transaction-based (i.e. atomic write operations)
-o SHALL make minimal modifications to the open-source file system, to enable easy upgrade file system to integrate upstream bugfixes
+X SHALL make minimal modifications to the open-source file system, to enable easy upgrade file system to integrate upstream bugfixes
 * SHALL present an interface for using user-defined file encryption
 * SHALL present an interface for using user-defined filename obfuscation
-   * SHOULD be adaptable for use on a hard disk drive (HDD) Stretch goal:
-* SHOULD implement a logical layer, to bridge storage regions that are discontiguous or on separate parts altogether
-Definitions of the above terms (ìshallî, ìshouldî) are per RFC 2119.
+   * SHOULD be adaptable for use on a hard disk drive (HDD)
+Definitions of the above terms (‚Äúshall‚Äù, ‚Äúshould‚Äù) are per RFC 2119.
 
 5. Expectations
 Phase 1 (Design):
@@ -38,7 +37,7 @@ o Generate a traceability matrix to ensure that your test cases cover all of the
 o Simulate power outages during Flash writes, and ensure that file system remains intact.
 o Identify file system testing, to ensure that that your solution has not negatively affected the technical soundness of the open source implementation in any way. (Think file system integrity/correctness.)
 * Conduct a Preliminary Design Review (PDR), to include the professor and Northrop advisor.
-* Implement quick/dirty prototypes for the highest-risk portions of your design. Cut corners. Verify that you have good solutions to the toughest problems you think youíll face.
+* Implement quick/dirty prototypes for the highest-risk portions of your design. Cut corners. Verify that you have good solutions to the toughest problems you think you‚Äôll face.
 * Conduct a Critical Design Review (CDR), to include the professor and Northrop advisor.
 
 Phase 2 (Implementation):
@@ -61,10 +60,10 @@ Phase 4 (Analysis):
 
 Overall Expectations:
 * Use source control management (SCM) for all source code throughout the project. This includes any throw-away prototype code, as well as your implementation
-o I strongly recommend Git, as itís currently one of the industry favorites.
+o I strongly recommend Git, as it‚Äôs currently one of the industry favorites.
 o GitHub is great. Does your school have an enterprise installation?
 * Apply revision control to your documentation as well.
-o Hint:  You can use the same solution for documents as you did for source control, if you want. However, you donít have to.
+o Hint:  You can use the same solution for documents as you did for source control, if you want. However, you don‚Äôt have to.
 * Deliver all generated documentation and source code repositories to your professor and Northrop advisor at the conclusion of your project.
 o Bonus if you can make your documentation and source code repositories available to your professor/advisor throughout your project.
 
