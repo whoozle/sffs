@@ -1,18 +1,27 @@
 Project Backlog
-Team Name
+Team XFFS
 
-Problem Statement:
-There is a need for an embedded file system which can maintain integrity on flash storage, in the event of power faults and
-fluctuations. There are transaction-based file systems that meet this need, however they do not offer an interface for encryption.
+Problem Statement
+There is a need for a file system which can maintain integrity on flash storage, in the event of power faults and fluctuations. There are transaction-based file systems that meet this need, however they do not offer an interface for encryption.
 
 
-Background Information:
+Background Information
+Many devices use Flash storage for persistent storage. In situations where power fluctuates (batteries running out, power outages, pulling the plug), the integrity of these Flash- based file systems can be compromised, rendering the device degraded or useless. This problem is often solved by utilizing a transaction-based file system, in which write operations are atomic. However, no such file system exists today that also provides an interface for user-defined encryption.
 
-Many embedded devices use Flash storage for persistent storage. In situations where power fluctuates (batteries running out,
-power outages, pulling the plug), the integrity of these Flash- based file systems can be compromised, rendering the embedded
-device degraded or useless. This problem is often solved by utilizing a transaction-based file system, in which write operations
-are atomic. However, no such file system exists today that also provides an interface for user- defined encryption.
+Requirements
 
-Requirements:
   Functional Requirements:
+	* As a user, I would like to…	
+	* As a developer I would like to…
+	* As a user, I would like to be able to create a filesystem
+	* As a user, I would like to be able to mount a filesystem
+	* As a user, I would like to be able to unmount a filesystem
+	* As a user, I would like to be able to add files to the filesystem
+	* As a user, I would like to be able to remove files from the filesystem
+	* As a user, I would like to be able to read files in the filesystem
+	* As a user, I would like to be list all of the files in the filesystem
+
+	
   Non-Functional Requirements:
+	We must be able to implement this on many different devices.
+	The encryption interface should work quickly.
