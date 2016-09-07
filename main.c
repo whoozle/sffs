@@ -7,7 +7,17 @@
 #include <unistd.h>
 #include <assert.h>
 
+
+//Used during 'wear' test
+#define EMU_DEVICE_SIZE (0x10000)
 static int fd;
+static uint8_t emu_device[EMU_DEVICE_SIZE];
+static unsigned emu_device_stat[EMU_DEVICE_SIZE];
+static unsigned emu_device_pos;
+static ssize_t emu_write_func(const void *ptr, size_t size); 
+static ssize_t emu_read_func(void *ptr, size_t size); 
+static off_t emu_seek_func(off_t offset, int whence); 
+
 
 static ssize_t fs_write_func(const void *ptr, size_t size) {
 	return write(fd, ptr, size);
@@ -21,45 +31,6 @@ static off_t fs_seek_func(off_t offset, int whence) {
 	return lseek(fd, offset, whence);
 }
 
-#define EMU_DEVICE_SIZE (0x10000)
-
-static uint8_t emu_device[EMU_DEVICE_SIZE];
-static unsigned emu_device_stat[EMU_DEVICE_SIZE];
-static unsigned emu_device_pos;
-
-static ssize_t emu_write_func(const void *ptr, size_t size) {
-	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
-	for(size_t i = 0; i < size; ++i)
-		++emu_device_stat[emu_device_pos + i];
-	memcpy(emu_device + emu_device_pos, ptr, size);
-	emu_device_pos += size;
-	return size;
-}
-
-static ssize_t emu_read_func(void *ptr, size_t size) {
-	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
-	memcpy(ptr, emu_device + emu_device_pos, size);
-	emu_device_pos += size;
-	return size;
-}
-
-static off_t emu_seek_func(off_t offset, int whence) {
-	switch(whence) {
-	case SEEK_SET:
-		emu_device_pos = offset;
-		break;
-	case SEEK_CUR:
-		emu_device_pos += offset;
-		break;
-	case SEEK_END:
-		emu_device_pos = EMU_DEVICE_SIZE + offset;
-		break;
-	default:
-		assert(0);
-	}
-	assert(emu_device_pos <= EMU_DEVICE_SIZE);
-	return emu_device_pos;
-}
 
 static int mount_image(struct sffs *fs, const char *fname) {
 	fd = open(fname, O_RDWR);
@@ -311,3 +282,40 @@ else if (strcmp(argv[2], "test") == 0) {
 	return 0;
 }
 
+
+
+
+//EMU
+static ssize_t emu_write_func(const void *ptr, size_t size) {
+	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
+	for(size_t i = 0; i < size; ++i)
+		++emu_device_stat[emu_device_pos + i];
+	memcpy(emu_device + emu_device_pos, ptr, size);
+	emu_device_pos += size;
+	return size;
+}
+
+static ssize_t emu_read_func(void *ptr, size_t size) {
+	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
+	memcpy(ptr, emu_device + emu_device_pos, size);
+	emu_device_pos += size;
+	return size;
+}
+
+static off_t emu_seek_func(off_t offset, int whence) {
+	switch(whence) {
+	case SEEK_SET:
+		emu_device_pos = offset;
+		break;
+	case SEEK_CUR:
+		emu_device_pos += offset;
+		break;
+	case SEEK_END:
+		emu_device_pos = EMU_DEVICE_SIZE + offset;
+		break;
+	default:
+		assert(0);
+	}
+	assert(emu_device_pos <= EMU_DEVICE_SIZE);
+	return emu_device_pos;
+}
