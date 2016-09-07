@@ -1,6 +1,5 @@
 //Team 23
 
-
 #include "sffs.h"
 #include <sys/stat.h>
 #include <fcntl.h>
