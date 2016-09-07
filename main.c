@@ -41,10 +41,30 @@ static int mount_image(struct sffs *fs, const char *fname) {
 	return sffs_mount(fs);
 }
 
+
+/* SFFS 
+
+	createfs: ./sffs-tool fsname.img createfs 10000
+	write:    ./sffs-tool fsname.img write test.txt
+    read:     ./sffs-tool fsname.img read test.txt
+	remove:	  ./sffs-tool fsname.img remove test.txt
+
+	list:     ./sffs-tool fsname.img list  
+	test:	  ./sffs-tool fsname.img test
+	wear:	  ./sffs-tool fsname.img wear
+
+*/
 int main(int argc, char **argv) {
 	struct sffs fs;
 	if (argc < 3) {
-		printf("usage: image-file [createfs file size|write file|read file]\n");
+		printf("Usage:\n\n"
+			   "\tcreatefs: ./sffs-tool fsname.img createfs 10000\n"
+			   "\twrite:    ./sffs-tool fsname.img write test.txt\n"
+			   "\tread:     ./sffs-tool fsname.img read test.txt\n"
+			   "\tremove:	  ./sffs-tool fsname.img remove test.txt\n\n"
+		       "\tlist:     ./sffs-tool fsname.img list\n"  
+			   "\ttest:	  ./sffs-tool fsname.img test\n"
+			   "\twear:	  ./sffs-tool fsname.img wear\n\n");	
 		return 0;
 	}
 
@@ -55,7 +75,7 @@ int main(int argc, char **argv) {
 //CREATE FILESYSTEM
 	if (strcmp(argv[2], "createfs") == 0) {
 		if (argc < 4) {
-			printf("usage: createfs filename size\n");
+			printf("usage: 	createfs: ./sffs-tool fsname.img createfs 10000	\n");
 			return 0;
 		}
 		fs.device_size = atoi(argv[3]);
@@ -84,7 +104,7 @@ int main(int argc, char **argv) {
 		int f;
 	
 		if (argc < 4) {
-			printf("usage: write imagefile file\n");
+			printf("usage:	write: ./sffs-tool fsname.img write test.txt  \n");
 			return 0;
 		}
 		
@@ -142,7 +162,7 @@ int main(int argc, char **argv) {
 	else if (strcmp(argv[2], "read") == 0) {
 		int f;
 		if (argc < 4) {
-			printf("usage: read imagefile file\n");
+			printf("usage: read:  ./sffs-tool fsname.img read test.txt  \n");
 			return 0;
 		}
 		if (mount_image(&fs, argv[1]) == -1)
@@ -175,7 +195,7 @@ int main(int argc, char **argv) {
 		size_t i, total, max;
 
 		if (argc < 3) {
-			printf("usage: list imagefile\n");
+			printf("usage: 	list:  ./sffs-tool fsname.img list  \n");
 			return 0;
 		}
 
@@ -197,7 +217,7 @@ int main(int argc, char **argv) {
 	else if (strcmp(argv[2], "remove") == 0) {
 		int f;
 		if (argc < 4) {
-			printf("usage: remove imagefile file\n");
+			printf("usage: remove:  ./sffs-tool fsname.img remove test.txt  \n");
 			return 0;
 		}
 		if (mount_image(&fs, argv[1]) == -1)
@@ -276,7 +296,13 @@ else if (strcmp(argv[2], "test") == 0) {
 
 //HANDLES BAD INPUT
 	else {
-		printf("unknown command: %s\n", argv[2]);
+		printf("Usage:\n\n\tcreatefs: ./sffs-tool fsname.img createfs 10000\n"
+			   "\twrite:    ./sffs-tool fsname.img write test.txt\n"
+			   "\tread:     ./sffs-tool fsname.img read test.txt\n"
+			   "\tremove:	  ./sffs-tool fsname.img remove test.txt\n\n"
+		       "\tlist:     ./sffs-tool fsname.img list\n"  
+			   "\ttest:	  ./sffs-tool fsname.img test\n"
+			   "\twear:	  ./sffs-tool fsname.img wear\n\n");	
 	}
 	
 	return 0;
