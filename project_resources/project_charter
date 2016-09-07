@@ -1,0 +1,31 @@
+Brian Vervaet
+Max Molnar
+Wyatt Dahlenburg
+Zach Kent
+Samuel Spencer
+
+---Problem Statement---
+There is a need for an embedded file system which can maintain integrity on flash storage, in the event of power faults and fluctuations. There are transaction-based file systems that meet this need, however they do not offer an interface for encryption.
+
+---Project Objectives---
+-Create a functional file system
+-Is suitable for running on an embedded system
+-Optimized for flash storage
+-Supports both NOR and NAND flash
+-Wraps a currently maintained open-source file system
+-Makes minimal changes to it to allow easy integration of upstream fixes
+-Transaction based
+-Presents an interface for user-defined file encryption
+-Presents an interface for user-defined filename obfuscation
+
+---Stakeholders---
+-Developers – Brian Vervaet, Max Molnar, Wyatt Dahlenburg, Zach Kent, Samuel Spencer
+-Development Managers – Keewhan Park
+-Project Owners – Jonathan Elchison (Cyber Software Engineer, Northrop Grumman Xetron)
+-Users/Customers – Northrop Grumman Xetron
+
+---Deliverables---
+-A file system that meets all of the objectives listed
+-An interface for defining encryption
+-An interface for filename obfuscation
+-Delivered on an embedded system
