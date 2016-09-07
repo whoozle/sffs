@@ -1,4 +1,4 @@
-//Team 23
+/*Team 23*/
 
 #include "sffs.h"
 #include <sys/stat.h>
