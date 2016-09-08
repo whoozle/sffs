@@ -25,6 +25,7 @@ Requirements
 	* As an admin, I would like an atomic filesystem
 	* As a user, I would like dependable data in the event of power failure
 	* As a admin, I would like to maintain permissions of files
+	* As a developer, I would like an API to assist with the inclusion of encryption plug-ins
 	* As an admin, I would like to define encryption for all write and read operations to the filesystem
 	* As an admin, I would like to define a hash for all filenames to be obfuscated
 	* As a user, I would like to create directories for files
