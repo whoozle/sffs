@@ -2,7 +2,7 @@ Project Backlog
 Team XFFS
 
 Problem Statement
-There is a need for a file system which can maintain integrity on flash storage, in the event of power faults and fluctuations. There are transaction-based file systems that meet this need, however they do not offer an interface for encryption.
+Power faults and fluctuations lead to poor integrity on flash storage. XFFS will be used as a filesystem that is fault-tolerant, atomic, and encryptable to prevent data failures and maintain security on flash storage and harddrives.
 
 
 Background Information
@@ -11,8 +11,8 @@ Many devices use Flash storage for persistent storage. In situations where power
 Requirements
 
   Functional Requirements:
-	* As a user, I would like to…	
-	* As a developer I would like to…
+	* As a user, I would like toâ€¦	
+	* As a developer I would like toâ€¦
 	* As a user, I would like to be able to create a filesystem
 	* As a user, I would like to be able to mount a filesystem
 	* As a user, I would like to be able to unmount a filesystem
@@ -20,6 +20,13 @@ Requirements
 	* As a user, I would like to be able to remove files from the filesystem
 	* As a user, I would like to be able to read files in the filesystem
 	* As a user, I would like to be list all of the files in the filesystem
+	* As a user, I would like to easily encrypt the files in the filesystem
+	* As a user, I would like to easily decrypt the files in the filesystem
+	* As a developer, I would like a simple set of commands for the filesystem
+	* As a user, I would like an atomic filesystem
+	* As a user, I would like dependable data in the event of power failure
+	* As a user, I would like to maintain permissions of files
+	
 
 	
   Non-Functional Requirements:
