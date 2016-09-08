@@ -1,8 +1,8 @@
 Project Backlog
-Team XFFS
+Team YFFS
 
 Problem Statement
-Power faults and fluctuations lead to poor integrity on flash storage. XFFS will be used as a filesystem that is fault-tolerant, atomic, and encryptable to prevent data failures and maintain security on flash storage and harddrives.
+Power faults and fluctuations lead to poor integrity on flash storage. YFFS will be used as a filesystem that is fault-tolerant, atomic, and encryptable to prevent data failures and maintain security on flash storage and harddrives.
 
 
 Background Information
