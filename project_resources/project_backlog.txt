@@ -34,7 +34,10 @@ Requirements
 
 	
   Non-Functional Requirements:
-	We must be able to implement this on many different devices.
-	The encryption interface should work quickly.
-	The system willbe embedded
-	The interface should be user friendly
+	* We must be able to implement this on many different devices.
+	* The encryption interface should work quickly.
+	* The system will mount to Linux
+	* The system will be functional with Linux utilities (mkfs, mount, umount, etc.) 
+	* The system will mount to embedded devices (if time allows)
+	* Documentation will be efficient and concise (explain command usage, functionality, etc.)
+	* The interface should be user friendly
