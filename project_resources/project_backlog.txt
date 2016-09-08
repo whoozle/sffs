@@ -12,20 +12,24 @@ Requirements
 
   Functional Requirements:
 	* As a user, I would like to…	
-	* As a developer I would like to…
+	* As a developer, I would like to…
+	* As an admin, I would like to…
 	* As a user, I would like to be able to create a filesystem
 	* As a user, I would like to be able to mount a filesystem
 	* As a user, I would like to be able to unmount a filesystem
 	* As a user, I would like to be able to add files to the filesystem
 	* As a user, I would like to be able to remove files from the filesystem
 	* As a user, I would like to be able to read files in the filesystem
-	* As a user, I would like to be list all of the files in the filesystem
-	* As a user, I would like to easily encrypt the files in the filesystem
-	* As a user, I would like to easily decrypt the files in the filesystem
+	* As a user, I would like to be able to list all of the files in the filesystem
 	* As a developer, I would like a simple set of commands for the filesystem
-	* As a user, I would like an atomic filesystem
+	* As an admin, I would like an atomic filesystem
 	* As a user, I would like dependable data in the event of power failure
-	* As a user, I would like to maintain permissions of files
+	* As a admin, I would like to maintain permissions of files
+	* As an admin, I would like to define encryption for all write and read operations to the filesystem
+	* As an admin, I would like to define a hash for all filenames to be obfuscated
+	* As a user, I would like to create directories for files
+	* As a user, I would like to use this filesystem on embedded devices
+	* As a user, I would like complete documentation of the filesystem tools
 	
 
 	
