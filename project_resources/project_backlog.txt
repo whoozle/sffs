@@ -32,3 +32,5 @@ Requirements
   Non-Functional Requirements:
 	We must be able to implement this on many different devices.
 	The encryption interface should work quickly.
+	The system willbe embedded
+	The interface should be user friendly
