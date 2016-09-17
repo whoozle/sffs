@@ -1,11 +1,5 @@
-# cs307
-
-
-
-
-
-##Simple Fault-tolerant File System, version 1.1
-
+#Simple Fault-tolerant File System, version 1.1
+###CS307: Brian VerVaet, Max Molnar, Sam Spencer, Wyatt Dahlenburg, Zachary Kent
 This tiny filesystem was designed to be the most safe in the world of SPI flash 
 filesystems. Writing into such flash splitted into single-byte commands and 
 could be interrupted by power failure or crash and therefore corrupt your data.
