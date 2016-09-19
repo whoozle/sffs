@@ -1,11 +1,6 @@
-#Simple Fault-tolerant File System, version 1.1
+#YFFS, version 1.1
 ###CS307: Brian VerVaet, Max Molnar, Sam Spencer, Wyatt Dahlenburg, Zachary Kent
-This tiny filesystem was designed to be the most safe in the world of SPI flash 
-filesystems. Writing into such flash splitted into single-byte commands and 
-could be interrupted by power failure or crash and therefore corrupt your data.
-Sffs finalizes metadata with one-bit switch and won't lose anything.
 
-Also this filesystem will protect you from flash wearing. It saves timestamps
-of writes and always rotate files around the flash, so you never got the same
-file written again and again on the same place.
+Many types of devices use Flash for persistent storage. In situations where power fluctuates (batteries running out, power outages, pulling the plug), the integrity of these Flash- based file systems can be compromised, rendering the device degraded or useless. YFFS is a filesystem designed to avoid these hazards and be used as a secure, dependable storage medium on any flash device.  YFFS provides stable storage despite power fluctuations by implementing a transaction-based file system. This type of file system is designed to leave the structure of directory, files, and metadata in a sound state. Yffs accomplishes this by finalizing metadata with a one-bit switch, ensuring it won't lose anything. While there are transaction-based file systems that accomplish the task of flash stability, no such file system exists today that also provides an interface for user-defined encryption. Until Now.
+
 
