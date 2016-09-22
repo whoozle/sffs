@@ -1,6 +1,6 @@
 CFLAGS=-DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x
 
-all: sffs-tool #yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
+all: sffs-tool yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
 
 sffs-tool: sffs.o main.o
 	$(CC) -o sffs-tool $^
@@ -24,4 +24,4 @@ yffs-write: sffs.o yffs-write.o
 	$(CC) -o yffs-write $^
 
 clean:
-		rm -f *.o sffs-tool
+	rm -f *.o sffs-tool yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
