@@ -1,4 +1,4 @@
-#include "sffs.h"
+#include "yffs.h"
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

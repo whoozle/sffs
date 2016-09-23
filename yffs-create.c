@@ -1,6 +1,6 @@
 /*Team 22*/
 
-#include "sffs.h"
+#include "yffs.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
