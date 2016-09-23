@@ -21,4 +21,4 @@ yffs-write: yffs.o yffs-write.o
 	$(CC) -o yffs-write $^
 
 clean:
-	rm -f *.o yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
+	rm -f *.iso *.o yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
