@@ -1,6 +1,6 @@
 CFLAGS=-DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x -w
 
-all: yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write oclean
+all: cd ..; yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write oclean
 
 yffs-ls: yffs.o yffs-ls.o
 	$(CC) -o yffs-ls $^
