@@ -3,7 +3,16 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <endian.h>
+
+//Allows program to run on macs
+#ifdef __APPLE__
+	#include <machine/endian.h>
+	#include <libkern/OSByteOrder.h>
+	#define htole32(x) OSSwapHostToLittleInt32(x)
+	#define le32toh(x) OSSwapLittleToHostInt32(x)
+#else
+	#include <endian.h>
+#endif
 
 #define SFFS_HEADER_SIZE (16)
 
