@@ -1,23 +1,23 @@
 CFLAGS=-DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x -w
 
-all: cd ..; yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write oclean
-
-yffs-ls: yffs.o yffs-ls.o
+all: 	yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write oclean
+	
+yffs-ls: sources/yffs.o sources/yffs-ls.o
 	$(CC) -o yffs-ls $^
 
-yffs-cat: yffs.o yffs-cat.o
+yffs-cat: sources/yffs.o sources/yffs-cat.o
 	$(CC) -o yffs-cat $^
 
-yffs-create: yffs.o yffs-create.o
+yffs-create: sources/yffs.o sources/yffs-create.o
 	$(CC) -o yffs-create $^
 
-yffs-touch: yffs.o yffs-touch.o
+yffs-touch: sources/yffs.o sources/yffs-touch.o
 	$(CC) -o yffs-touch $^
 
-yffs-rm: yffs.o yffs-rm.o
+yffs-rm: sources/yffs.o sources/yffs-rm.o
 	$(CC) -o yffs-rm $^
 
-yffs-write: yffs.o yffs-write.o
+yffs-write: sources/yffs.o sources/yffs-write.o
 	$(CC) -o yffs-write $^	
 
 
@@ -30,20 +30,20 @@ install: yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
 	mv yffs-touch /usr/local/bin
 	mv yffs-rm /usr/local/bin
 	mv yffs-write /usr/local/bin
-	rm -f *.o
+	rm -f sources/*.o
 
 clean:
-	rm -f *.iso *.o yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
+	rm -f *.iso sources/*.o yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
 
 # Used so object files are never left behind
 oclean:
-	rm -f *.o
-
+	rm -f sources/*.o
+	
 # Removes binarys from /usr/local/bin
 uninstall:
-	rm /usr/local/bin/yffs-ls
-	rm /usr/local/bin/yffs-cat
-	rm /usr/local/bin/yffs-create
-	rm /usr/local/bin/yffs-touch
-	rm /usr/local/bin/yffs-rm
-	rm /usr/local/bin/yffs-write
+	rm -f /usr/local/bin/yffs-ls
+	rm -f /usr/local/bin/yffs-cat
+	rm -f /usr/local/bin/yffs-create
+	rm -f /usr/local/bin/yffs-touch
+	rm -f /usr/local/bin/yffs-rm
+	rm -f /usr/local/bin/yffs-write
