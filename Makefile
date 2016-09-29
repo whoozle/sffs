@@ -24,12 +24,12 @@ yffs-write: sources/yffs.o sources/yffs-write.o
 # Use install command to send binarys to /usr/local/bin
 # Requires SU
 install: yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
-	mv yffs-ls /usr/local/bin
-	mv yffs-cat /usr/local/bin
-	mv yffs-create /usr/local/bin
-	mv yffs-touch /usr/local/bin
-	mv yffs-rm /usr/local/bin
-	mv yffs-write /usr/local/bin
+	mv bin/yffs-ls /usr/local/bin
+	mv bin/yffs-cat /usr/local/bin
+	mv bin/yffs-create /usr/local/bin
+	mv bin/yffs-touch /usr/local/bin
+	mv bin/yffs-rm /usr/local/bin
+	mv bin/yffs-write /usr/local/bin
 	rm -f sources/*.o
 
 clean:
