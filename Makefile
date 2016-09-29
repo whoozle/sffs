@@ -3,22 +3,22 @@ CFLAGS=-DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x -w
 all: 	yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write oclean
 	
 yffs-ls: sources/yffs.o sources/yffs-ls.o
-	$(CC) -o yffs-ls $^
+	$(CC) -o bin/yffs-ls $^
 
 yffs-cat: sources/yffs.o sources/yffs-cat.o
-	$(CC) -o yffs-cat $^
+	$(CC) -o bin/yffs-cat $^
 
 yffs-create: sources/yffs.o sources/yffs-create.o
-	$(CC) -o yffs-create $^
+	$(CC) -o bin/yffs-create $^
 
 yffs-touch: sources/yffs.o sources/yffs-touch.o
-	$(CC) -o yffs-touch $^
+	$(CC) -o bin/yffs-touch $^
 
 yffs-rm: sources/yffs.o sources/yffs-rm.o
-	$(CC) -o yffs-rm $^
+	$(CC) -o bin/yffs-rm $^
 
 yffs-write: sources/yffs.o sources/yffs-write.o
-	$(CC) -o yffs-write $^	
+	$(CC) -o bin/yffs-write $^	
 
 
 # Use install command to send binarys to /usr/local/bin
@@ -33,7 +33,7 @@ install: yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
 	rm -f sources/*.o
 
 clean:
-	rm -f *.iso sources/*.o yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
+	rm -f *.iso sources/*.o bin/yffs-ls bin/yffs-cat bin/yffs-create bin/yffs-touch bin/yffs-rm bin/yffs-write
 
 # Used so object files are never left behind
 oclean:
