@@ -8,7 +8,7 @@ yffs-ls: sources/yffs.o sources/yffs-ls.o
 yffs-cat: sources/yffs.o sources/yffs-cat.o
 	@$(CC) -o bin/yffs-cat $^
 
-yffs-create: sources/yffs.o sources/yffs-create.o
+yffs-create: sources/yffs-create.o
 	@$(CC) -o bin/yffs-create $^
 
 yffs-touch: sources/yffs.o sources/yffs-touch.o
