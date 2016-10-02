@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 			printf("size must be greater than 32 bytes\n");
 			return 1;
 		}
-		printf("creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
+		printf("!!creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
 		{
 			fd = open(argv[1], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			if (fd == -1) {

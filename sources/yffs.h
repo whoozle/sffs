@@ -39,8 +39,8 @@ struct sffs_vector {
 };
 
 struct sffs {
-	size_t device_size;
-	struct sffs_vector files, free;
+	size_t device_size; //Total filesystem size
+	struct sffs_vector files, free; // 'files' = allocated vector, 'free' = free vector
 
 	write_func write;
 	read_func read;

@@ -34,8 +34,7 @@ static off_t fs_seek_func(off_t offset, int whence) {
 int main(int argc, char **argv) {
 	struct sffs fs;
 	if (argc < 3) {
-		printf("Usage:\n\n"
-			   "\tcreatefs: ./yffs-create fsname.img 10000\n");	
+		printf("Usage: createfs: ./yffs-create fsname.img 10000\n");	
 		return 0;
 	}
 
@@ -43,31 +42,26 @@ int main(int argc, char **argv) {
 	fs.read = fs_read_func;
 	fs.seek = fs_seek_func;
 
-		//CREATE FILESYSTEM
-		if (argc < 3) {
-			printf("usage: 	createfs: ./sffs-tool fsname.img createfs 10000	\n");
-			return 0;
-		}
-		
-		fs.device_size = atoi(argv[2]);
-		if (fs.device_size < 32) {
-			printf("size must be greater than 32 bytes\n");
+	fs.device_size = atoi(argv[2]);
+	if (fs.device_size < 32) {
+		printf("YFFS must be greater then 32 bytes!\n");
+		return 1;
+	}
+	
+	{
+		fd = open(argv[1], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR ); //Create a file'system' at this location, w/ permissions.
+		if (fd == -1) {
+			perror("open");
 			return 1;
 		}
+		sffs_format(&fs); //This takes the new fs, and adds a 'first block' with an empty header.
+		close(fd);
 		
-		printf("creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
-		{
-			fd = open(argv[1], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-			if (fd == -1) {
-				perror("open");
-				return 1;
-			}
-			sffs_format(&fs);
-			close(fd);
-			
-			if (truncate(argv[1], fs.device_size) == -1)
-				perror("truncate");
-		}
-		return 0;
+		if (truncate(argv[1], fs.device_size) == -1)
+			perror("truncate");
+	}
+	//Only print output on errors
+	//printf("YFFS creation successful!\n \'%s\' -> size: %u bytes\n",argv[1], (unsigned)fs.device_size);
+	return 0;
 }
 
