@@ -66,29 +66,37 @@ int main(int argc, char **argv) {
 
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
-
+		
 		for(f = 2; f < argc; ++f) {
 			int src_fd = -1;
 			off_t src_size = 0;
 			void *src_data = 0;
 			
 			printf("reading source %s...\n", argv[f]);
+			
+			//check if given file argv[f] opens correctly
 			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 				perror("open");
 				continue;
 			}
 			src_size = lseek(src_fd, 0, SEEK_END);
+			
+			//check if size is legitimate
 			if (src_size == (off_t) -1) {
 				perror("lseek");
 				goto next;
 			}
 			src_data = malloc(src_size);
+			
+			//checks malloc
 			if (src_data == NULL) {
 				perror("malloc");
 				goto next;
 			}
 	
 			lseek(src_fd, 0, SEEK_SET);
+			
+			//compares actual size to variable "src_size"
 			if (read(src_fd, src_data, src_size) != src_size) {
 				perror("short read");
 				goto next;
