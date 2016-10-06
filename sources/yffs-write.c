@@ -49,6 +49,11 @@ static int mount_image(struct sffs *fs, const char *fname) {
 
 */
 int main(int argc, char **argv) {
+	/*
+	TO DO:
+		Redo arguments to accept a flag (-a, -r) 
+		Rewrite code to append or rewrite file
+	*/
 	struct sffs fs;
 	if (argc < 3) {
 		printf("Usage:\n\n"
@@ -63,22 +68,30 @@ int main(int argc, char **argv) {
 
 //WRITE TO FILESYSTEM
 		int f;
-
+		
+		//mount system named at argv[1], return if it failed
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
-		
+		//loops through all args not including yffs command and fs name
 		for(f = 2; f < argc; ++f) {
+			//src_fd is an error checker
 			int src_fd = -1;
+			
+			//size
 			off_t src_size = 0;
+			
+			//actual data to be written
 			void *src_data = 0;
 			
 			printf("reading source %s...\n", argv[f]);
 			
-			//check if given file argv[f] opens correctly
+			//open file
 			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 				perror("open");
 				continue;
 			}
+			
+			//set size 
 			src_size = lseek(src_fd, 0, SEEK_END);
 			
 			//check if size is legitimate
@@ -86,6 +99,8 @@ int main(int argc, char **argv) {
 				perror("lseek");
 				goto next;
 			}
+			
+			//make space in memory for data
 			src_data = malloc(src_size);
 			
 			//checks malloc
@@ -104,6 +119,7 @@ int main(int argc, char **argv) {
 			close(src_fd);
 			printf("writing file %s\n", argv[f]);
 			
+			//writes the file
 			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
 #if 0
