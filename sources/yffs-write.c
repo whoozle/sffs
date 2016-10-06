@@ -124,6 +124,7 @@ int main(int argc, char **argv) {
 			
 			//writes the file
 			//goes to 'next' if write failed (?)
+			//mutexes here or in yffs.c (?)
 			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
 #if 0
