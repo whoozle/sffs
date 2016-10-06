@@ -1,7 +1,7 @@
-CFLAGS= -DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x -w
+CFLAGS= -DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x -w  
 
 all: 	yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write oclean
-	
+
 yffs-ls: sources/yffs.o sources/yffs-ls.o
 	@$(CC) -o bin/yffs-ls $^
 
