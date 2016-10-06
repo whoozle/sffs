@@ -27,12 +27,13 @@ static off_t fs_seek_func(off_t offset, int whence) {
 
 
 static int mount_image(struct sffs *fs, const char *fname) {
-	//would have to set to O_APPEND if -a was called
+	//opens argv[1] which is the fs
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
 		return -1;
 	}
+	//mounts fs, returns an int error/success code
 	return sffs_mount(fs);
 }
 
@@ -53,7 +54,7 @@ int main(int argc, char **argv) {
 	/*
 	TO DO:
 		Redo arguments to accept a flag (-a, -r) 
-		./yffs-write -flag filesystem text
+		Usage: ./yffs-write -flag filesystem text
 		Rewrite code to append or rewrite file
 	*/
 	struct sffs fs;
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
 			
 			printf("reading source %s...\n", argv[f]);
 			
-			//open file
+			//open file - need to use O_APPEND if flagged
 			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 				perror("open");
 				continue;
@@ -122,7 +123,7 @@ int main(int argc, char **argv) {
 			printf("writing file %s\n", argv[f]);
 			
 			//writes the file
-			//goes to next if write failed (?)
+			//goes to 'next' if write failed (?)
 			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
 #if 0
