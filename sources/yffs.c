@@ -185,6 +185,17 @@ static int sffs_commit_metadata(struct sffs *fs, struct sffs_block *block) {
 	return (flag & 0x80) != 0? 1: 0;
 }
 
+/*
+returns a long which contains the number of sffs_entry structs into files.ptr that the 
+file's entry is from the beginning of files.ptr
+         0                  1                   2                  3   
+|<---sffs_entry--->|<---sffs_entry--->|<---needThisOne--->|<---sffs_entry--->|
+
+sffs_find_file would return 2, because it is entry number 2.
+
+you would get a specific sffs_entry pointer from a filename like so (from sffs_read):
+struct (sffs_entry *) my_file = ((struct sffs_entry *)fs->files.ptr) + sffs_find_file(fs, fname);
+ */
 static long sffs_find_file(struct sffs *fs, const char *fname) {
 	struct sffs_entry *files = (struct sffs_entry *)fs->files.ptr;
 	int first = 0, last = fs->files.size / sizeof(struct sffs_entry);
@@ -406,6 +417,9 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	return size;
 }
 
+/*
+gets the 
+ */
 ssize_t sffs_read(struct sffs *fs, const char *fname, void *data, size_t size) {
 	struct sffs_entry *file;
 	long pos = sffs_find_file(fs, fname), offset;

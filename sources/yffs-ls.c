@@ -40,36 +40,31 @@ static int mount_image(struct sffs *fs, const char *fname) {
 
 */
 int main(int argc, char **argv) {
-	struct sffs fs;
-	if (argc < 2) {
-		printf("\tlist:     ./sffs-tool fsname.img list\n");	
-		return 0;
-	}
+  struct sffs fs;
+  if (argc < 2) {
+    printf("usage: 	list:  ./yffs-ls fsname.img\n");     //hopefully eventually: "./yffs-ls fsname.img /path/to/dir"
+    return 0;
+  }
 
-	fs.write = fs_write_func;
-	fs.read = fs_read_func;
-	fs.seek = fs_seek_func;
+  fs.write = fs_write_func;
+  fs.read = fs_read_func;
+  fs.seek = fs_seek_func;
 
-//LIST OBJECTS IN FILESYSTEM
-		const char *name;
-		size_t i, total, max;
+  //LIST OBJECTS IN FILESYSTEM
+  const char *name;
+  size_t i, total, max;
 
-		if (argc < 2) {
-			printf("usage: 	list:  ./sffs-tool fsname.img list  \n");
-			return 0;
-		}
+  if (mount_image(&fs, argv[1]) == -1)
+    return 2;
 
-		if (mount_image(&fs, argv[1]) == -1)
-			return 2;
-
-		for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
-			printf("%s\n", name);
-		}
+  for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
+    printf("%s\n", name);
+  }
 		
-		max = sffs_get_largest_free(&fs);
-		total = sffs_get_total_free(&fs);
-		printf("Free blocks, total: %zu, largest: %zu\n", total, max);
+  max = sffs_get_largest_free(&fs);
+  total = sffs_get_total_free(&fs);
+  printf("Free blocks, total: %zu, largest: %zu\n", total, max);
 
-		sffs_umount(&fs);
-	return 0;
+  sffs_umount(&fs);
+  return 0;
 }

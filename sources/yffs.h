@@ -54,6 +54,10 @@ struct sffs_entry {
 	struct sffs_block block;
 };
 
+/*
+contains the pointer to the space with the sffs_entry array.
+ptr is like |<---sffs_entry--->|<---sffs_entry--->|<---sffs_entry--->|
+*/
 struct sffs_vector {
 	uint8_t *ptr;
 	size_t size;
