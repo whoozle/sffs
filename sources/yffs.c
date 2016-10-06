@@ -1,22 +1,7 @@
 #include "yffs.h"
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-
-//Allows program to run on macs
-#ifdef __APPLE__
-	#include <machine/endian.h>
-	#include <libkern/OSByteOrder.h>
-	#define htole32(x) OSSwapHostToLittleInt32(x)
-	#define le32toh(x) OSSwapLittleToHostInt32(x)
-#else
-	#include <endian.h>
-#endif
-
 #define SFFS_HEADER_SIZE (16)
 
-static int sffs_entry_compare(const void *a, const void *b) {
+ int sffs_entry_compare(const void *a, const void *b) {
 	struct sffs_entry *ea = (struct sffs_entry *)a;
 	struct sffs_entry *eb = (struct sffs_entry *)b;
 	int d = strcmp(ea->name, eb->name);
