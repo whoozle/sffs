@@ -27,6 +27,7 @@ static off_t fs_seek_func(off_t offset, int whence) {
 
 
 static int mount_image(struct sffs *fs, const char *fname) {
+	//would have to set to O_APPEND if -a was called
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
@@ -52,6 +53,7 @@ int main(int argc, char **argv) {
 	/*
 	TO DO:
 		Redo arguments to accept a flag (-a, -r) 
+		./yffs-write -flag filesystem text
 		Rewrite code to append or rewrite file
 	*/
 	struct sffs fs;
@@ -120,6 +122,7 @@ int main(int argc, char **argv) {
 			printf("writing file %s\n", argv[f]);
 			
 			//writes the file
+			//goes to next if write failed (?)
 			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
 #if 0
@@ -127,6 +130,9 @@ int main(int argc, char **argv) {
 			sffs_read(&fs, argv[f], src_data, src_size);
 			fwrite(src_data, 1, src_size, stdout);
 #endif
+		/* 'next' appears to just close everything
+			implying it is only called IF there is nothing to write, i.e. no more args
+		*/
 		next:
 			free(src_data);
 			close(src_fd);
