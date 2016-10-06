@@ -27,11 +27,13 @@ static off_t fs_seek_func(off_t offset, int whence) {
 
 
 static int mount_image(struct sffs *fs, const char *fname) {
+	//opens argv[1] which is the fs
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
 		return -1;
 	}
+	//mounts fs, returns an int error/success code
 	return sffs_mount(fs);
 }
 
@@ -49,6 +51,12 @@ static int mount_image(struct sffs *fs, const char *fname) {
 
 */
 int main(int argc, char **argv) {
+	/*
+	TO DO:
+		Redo arguments to accept a flag (-a, -r) 
+		Usage: ./yffs-write -flag filesystem text
+		Rewrite code to append or rewrite file
+	*/
 	struct sffs fs;
 	if (argc < 3) {
 		printf("Usage:\n\n"
@@ -63,32 +71,50 @@ int main(int argc, char **argv) {
 
 //WRITE TO FILESYSTEM
 		int f;
-
+		
+		//mount system named at argv[1], return if it failed
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
-
+		//loops through all args not including yffs command and fs name
 		for(f = 2; f < argc; ++f) {
+			//src_fd is an error checker
 			int src_fd = -1;
+			
+			//size
 			off_t src_size = 0;
+			
+			//actual data to be written
 			void *src_data = 0;
 			
 			printf("reading source %s...\n", argv[f]);
+			
+			//open file - need to use O_APPEND if flagged
 			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 				perror("open");
 				continue;
 			}
+			
+			//set size 
 			src_size = lseek(src_fd, 0, SEEK_END);
+			
+			//check if size is legitimate
 			if (src_size == (off_t) -1) {
 				perror("lseek");
 				goto next;
 			}
+			
+			//make space in memory for data
 			src_data = malloc(src_size);
+			
+			//checks malloc
 			if (src_data == NULL) {
 				perror("malloc");
 				goto next;
 			}
 	
 			lseek(src_fd, 0, SEEK_SET);
+			
+			//compares actual size to variable "src_size"
 			if (read(src_fd, src_data, src_size) != src_size) {
 				perror("short read");
 				goto next;
@@ -96,6 +122,9 @@ int main(int argc, char **argv) {
 			close(src_fd);
 			printf("writing file %s\n", argv[f]);
 			
+			//writes the file
+			//goes to 'next' if write failed (?)
+			//mutexes here or in yffs.c (?)
 			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
 #if 0
@@ -103,6 +132,9 @@ int main(int argc, char **argv) {
 			sffs_read(&fs, argv[f], src_data, src_size);
 			fwrite(src_data, 1, src_size, stdout);
 #endif
+		/* 'next' appears to just close everything
+			implying it is only called IF there is nothing to write, i.e. no more args
+		*/
 		next:
 			free(src_data);
 			close(src_fd);
