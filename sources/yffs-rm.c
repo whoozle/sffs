@@ -1,4 +1,6 @@
-#include "sffs.h"
+/*Team 22*/
+
+#include "yffs.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
@@ -7,7 +9,17 @@
 #include <unistd.h>
 #include <assert.h>
 
+
+//Used during 'wear' test
+#define EMU_DEVICE_SIZE (0x10000)
 static int fd;
+static uint8_t emu_device[EMU_DEVICE_SIZE];
+static unsigned emu_device_stat[EMU_DEVICE_SIZE];
+static unsigned emu_device_pos;
+static ssize_t emu_write_func(const void *ptr, size_t size); 
+static ssize_t emu_read_func(void *ptr, size_t size); 
+static off_t emu_seek_func(off_t offset, int whence); 
+
 
 static ssize_t fs_write_func(const void *ptr, size_t size) {
 	return write(fd, ptr, size);
@@ -21,45 +33,6 @@ static off_t fs_seek_func(off_t offset, int whence) {
 	return lseek(fd, offset, whence);
 }
 
-#define EMU_DEVICE_SIZE (0x10000)
-
-static uint8_t emu_device[EMU_DEVICE_SIZE];
-static unsigned emu_device_stat[EMU_DEVICE_SIZE];
-static unsigned emu_device_pos;
-
-static ssize_t emu_write_func(const void *ptr, size_t size) {
-	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
-	for(size_t i = 0; i < size; ++i)
-		++emu_device_stat[emu_device_pos + i];
-	memcpy(emu_device + emu_device_pos, ptr, size);
-	emu_device_pos += size;
-	return size;
-}
-
-static ssize_t emu_read_func(void *ptr, size_t size) {
-	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
-	memcpy(ptr, emu_device + emu_device_pos, size);
-	emu_device_pos += size;
-	return size;
-}
-
-static off_t emu_seek_func(off_t offset, int whence) {
-	switch(whence) {
-	case SEEK_SET:
-		emu_device_pos = offset;
-		break;
-	case SEEK_CUR:
-		emu_device_pos += offset;
-		break;
-	case SEEK_END:
-		emu_device_pos = EMU_DEVICE_SIZE + offset;
-		break;
-	default:
-		assert(0);
-	}
-	assert(emu_device_pos <= EMU_DEVICE_SIZE);
-	return emu_device_pos;
-}
 
 static int mount_image(struct sffs *fs, const char *fname) {
 	fd = open(fname, O_RDWR);
@@ -70,10 +43,30 @@ static int mount_image(struct sffs *fs, const char *fname) {
 	return sffs_mount(fs);
 }
 
+
+/* SFFS 
+
+	createfs: ./sffs-tool fsname.img createfs 10000
+	write:    ./sffs-tool fsname.img write test.txt
+    read:     ./sffs-tool fsname.img read test.txt
+	remove:	  ./sffs-tool fsname.img remove test.txt
+
+	list:     ./sffs-tool fsname.img list  
+	test:	  ./sffs-tool fsname.img test
+	wear:	  ./sffs-tool fsname.img wear
+
+*/
 int main(int argc, char **argv) {
 	struct sffs fs;
 	if (argc < 3) {
-		printf("usage: image-file [createfs file size|write file|read file]\n");
+		printf("Usage:\n\n"
+			   "\tcreatefs: ./sffs-tool fsname.img createfs 10000\n"
+			   "\twrite:    ./sffs-tool fsname.img write test.txt\n"
+			   "\tread:     ./sffs-tool fsname.img read test.txt\n"
+			   "\tremove:	  ./sffs-tool fsname.img remove test.txt\n\n"
+		       "\tlist:     ./sffs-tool fsname.img list\n"  
+			   "\ttest:	  ./sffs-tool fsname.img test\n"
+			   "\twear:	  ./sffs-tool fsname.img wear\n\n");	
 		return 0;
 	}
 
@@ -81,9 +74,10 @@ int main(int argc, char **argv) {
 	fs.read = fs_read_func;
 	fs.seek = fs_seek_func;
 
+//CREATE FILESYSTEM
 	if (strcmp(argv[2], "createfs") == 0) {
 		if (argc < 4) {
-			printf("usage: createfs filename size\n");
+			printf("usage: 	createfs: ./sffs-tool fsname.img createfs 10000	\n");
 			return 0;
 		}
 		fs.device_size = atoi(argv[3]);
@@ -91,7 +85,7 @@ int main(int argc, char **argv) {
 			printf("size must be greater than 32 bytes\n");
 			return 1;
 		}
-		printf("creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
+		printf("!~creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
 		{
 			fd = open(argv[1], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			if (fd == -1) {
@@ -105,32 +99,14 @@ int main(int argc, char **argv) {
 				perror("truncate");
 		}
 		return 0;
-	} else if (strcmp(argv[2], "list") == 0) {
-		const char *name;
-		size_t i, total, max;
+	} 
 
-		if (argc < 3) {
-			printf("usage: list imagefile\n");
-			return 0;
-		}
-
-		if (mount_image(&fs, argv[1]) == -1)
-			return 2;
-
-		for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
-			printf("%s\n", name);
-		}
-		
-		max = sffs_get_largest_free(&fs);
-		total = sffs_get_total_free(&fs);
-		printf("Free blocks, total: %zu, largest: %zu\n", total, max);
-
-		sffs_umount(&fs);
-	} else if (strcmp(argv[2], "write") == 0) {
+//WRITE TO FILESYSTEM
+	 else if (strcmp(argv[2], "write") == 0) {
 		int f;
 	
 		if (argc < 4) {
-			printf("usage: write imagefile file\n");
+			printf("usage:	write: ./sffs-tool fsname.img write test.txt  \n");
 			return 0;
 		}
 		
@@ -182,10 +158,13 @@ int main(int argc, char **argv) {
 		sffs_umount(&fs);
 		
 		close(fd);
-	} else if (strcmp(argv[2], "read") == 0) {
+	} 
+	
+//READ FROM FILESYSTEM	
+	else if (strcmp(argv[2], "read") == 0) {
 		int f;
 		if (argc < 4) {
-			printf("usage: read imagefile file\n");
+			printf("usage: read:  ./sffs-tool fsname.img read test.txt  \n");
 			return 0;
 		}
 		if (mount_image(&fs, argv[1]) == -1)
@@ -210,10 +189,37 @@ int main(int argc, char **argv) {
 			free(src);
 		}
 		sffs_umount(&fs);
-	} else if (strcmp(argv[2], "remove") == 0) {
+	} 	
+
+//LIST OBJECTS IN FILESYSTEM
+	else if (strcmp(argv[2], "list") == 0) {
+		const char *name;
+		size_t i, total, max;
+
+		if (argc < 3) {
+			printf("usage: 	list:  ./sffs-tool fsname.img list  \n");
+			return 0;
+		}
+
+		if (mount_image(&fs, argv[1]) == -1)
+			return 2;
+
+		for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
+			printf("%s\n", name);
+		}
+		
+		max = sffs_get_largest_free(&fs);
+		total = sffs_get_total_free(&fs);
+		printf("Free blocks, total: %zu, largest: %zu\n", total, max);
+
+		sffs_umount(&fs);
+	}
+
+//REMOVE ITEM FROM FILESYSTEM	
+	else if (strcmp(argv[2], "remove") == 0) {
 		int f;
 		if (argc < 4) {
-			printf("usage: remove imagefile file\n");
+			printf("usage: remove:  ./sffs-tool fsname.img remove test.txt  \n");
 			return 0;
 		}
 		if (mount_image(&fs, argv[1]) == -1)
@@ -224,7 +230,10 @@ int main(int argc, char **argv) {
 		}
 
 		sffs_umount(&fs);
-	} else if (strcmp(argv[2], "test") == 0) {
+	} 
+
+//TEST THE FILESYSTEM
+else if (strcmp(argv[2], "test") == 0) {
 		char buf[120];
 		int i;
 		for(i = 0; i < 120; ++i) 
@@ -249,7 +258,10 @@ int main(int argc, char **argv) {
 		sffs_write(&fs, "f3", buf, 120);
 		
 		sffs_umount(&fs);
-	} else if (strcmp(argv[2], "wear") == 0) {
+	} 
+
+//CHECK FILESYSTEM WEAR
+	else if (strcmp(argv[2], "wear") == 0) {
 		char buf[0x100];
 		size_t i;
 		unsigned long total = 0;
@@ -282,9 +294,56 @@ int main(int argc, char **argv) {
 
 		sffs_umount(&fs);
 		
-	} else {
-		printf("unknown command: %s\n", argv[2]);
+	} 
+
+//HANDLES BAD INPUT
+	else {
+		printf("Usage:\n\n\tcreatefs: ./sffs-tool fsname.img createfs 10000\n"
+			   "\twrite:    ./sffs-tool fsname.img write test.txt\n"
+			   "\tread:     ./sffs-tool fsname.img read test.txt\n"
+			   "\tremove:	  ./sffs-tool fsname.img remove test.txt\n\n"
+		       "\tlist:     ./sffs-tool fsname.img list\n"  
+			   "\ttest:	  ./sffs-tool fsname.img test\n"
+			   "\twear:	  ./sffs-tool fsname.img wear\n\n");	
 	}
 	
 	return 0;
+}
+
+
+
+
+//EMU
+static ssize_t emu_write_func(const void *ptr, size_t size) {
+	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
+	for(size_t i = 0; i < size; ++i)
+		++emu_device_stat[emu_device_pos + i];
+	memcpy(emu_device + emu_device_pos, ptr, size);
+	emu_device_pos += size;
+	return size;
+}
+
+static ssize_t emu_read_func(void *ptr, size_t size) {
+	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
+	memcpy(ptr, emu_device + emu_device_pos, size);
+	emu_device_pos += size;
+	return size;
+}
+
+static off_t emu_seek_func(off_t offset, int whence) {
+	switch(whence) {
+	case SEEK_SET:
+		emu_device_pos = offset;
+		break;
+	case SEEK_CUR:
+		emu_device_pos += offset;
+		break;
+	case SEEK_END:
+		emu_device_pos = EMU_DEVICE_SIZE + offset;
+		break;
+	default:
+		assert(0);
+	}
+	assert(emu_device_pos <= EMU_DEVICE_SIZE);
+	return emu_device_pos;
 }
