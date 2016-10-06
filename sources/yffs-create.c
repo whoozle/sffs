@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 			perror("open");
 			return 1;
 		}
-//		sffs_format(&fs); //This takes the new fs, and adds a 'first block' with an empty header.
+		sffs_format(&fs); //This takes the new fs, and adds a 'first block' with an empty header.
 		close(fd);
 		
 		if (truncate(argv[1], fs.device_size) == -1)
