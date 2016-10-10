@@ -1,14 +1,6 @@
 /*Team 22*/
 
 #include "yffs.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-
 
 static int fd;
 
@@ -168,7 +160,7 @@ int main(int argc, char **argv) {
 		
 		printf("unmounting...\n");
 		sffs_umount(&fs);
-		//remove("temp.txt");
+		remove("temp.txt");
 		
 		close(fd);
 		return 0;
