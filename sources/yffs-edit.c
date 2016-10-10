@@ -28,6 +28,7 @@ static off_t fs_seek_func(off_t offset, int whence) {
 
 static int mount_image(struct sffs *fs, const char *fname) {
 	//opens argv[1] which is the fs
+	//Probably need O_APPEND
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
@@ -88,7 +89,7 @@ int main(int argc, char **argv) {
 			
 			printf("reading source %s...\n", argv[f]);
 			
-			//open file - need to use O_APPEND if flagged
+			//open file 
 			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 				perror("open");
 				continue;
