@@ -28,7 +28,6 @@ static off_t fs_seek_func(off_t offset, int whence) {
 
 static int mount_image(struct sffs *fs, const char *fname) {
 	//opens argv[1] which is the fs
-	//Probably need O_APPEND
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
@@ -78,24 +77,24 @@ int main(int argc, char **argv) {
 			return 2;
 		//loops through all args not including yffs command and fs name
 		for(f = 2; f < argc; ++f) {
-			//src_fd is an error checker
+			//src_fd is the file descriptor for argv[f]
 			int src_fd = -1;
 			
-			//size
+			//offset
 			off_t src_size = 0;
 			
-			//actual data to be written
+			//buffer
 			void *src_data = 0;
 			
 			printf("reading source %s...\n", argv[f]);
 			
-			//open file 
+			//set src_fd to arv[f] 
 			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 				perror("open");
 				continue;
 			}
 			
-			//set size 
+			//set size
 			src_size = lseek(src_fd, 0, SEEK_END);
 			
 			//check if size is legitimate
@@ -115,11 +114,13 @@ int main(int argc, char **argv) {
 	
 			lseek(src_fd, 0, SEEK_SET);
 			
-			//compares actual size to variable "src_size"
+			//reads from argv[f]->src_data
 			if (read(src_fd, src_data, src_size) != src_size) {
 				perror("short read");
 				goto next;
 			}
+			
+			//no longer need arv[f]
 			close(src_fd);
 			printf("writing file %s\n", argv[f]);
 			
