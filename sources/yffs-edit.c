@@ -54,13 +54,14 @@ int main(int argc, char **argv) {
 	/*
 	TO DO:
 		Redo arguments to accept a flag (-a, -r) 
-		Usage: ./yffs-write -flag filesystem text
+		Usage: ./yffs-write filesystem original new
 		Rewrite code to append or rewrite file
 	*/
 	struct sffs fs;
 	if (argc < 3) {
 		printf("Usage:\n\n"
-			   "\twrite:    ./yffs-write fsname.img test.txt\n");	
+			   "\twrite:    ./yffs-write fsname.img newFile\n"
+			"\twrite: 	./yffs-write fsname.img orignal new\n");	
 		return 0;
 	}
 
@@ -70,13 +71,27 @@ int main(int argc, char **argv) {
 
 
 //WRITE TO FILESYSTEM
-		int f;
+		int f = 2;
 		
 		//mount system named at argv[1], return if it failed
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 		//loops through all args not including yffs command and fs name
-		for(f = 2; f < argc; ++f) {
+	//	for(f = 2; f < argc; ++f) {
+		if (argc == 4) {
+			f = 3; 
+			struct stat buf;
+			const char *fname = argv[2];
+			void *src;
+			ssize_t r;
+			sffs_stat(&fs, fname, &buf);
+			printf("%s = %zu\n", fname, buf.st_size);
+			src = malloc(buf.st_size);
+			r = sffs_read(&fs, fname, src, buf.st_size);
+			fwrite(src, 1, r, stdout);
+			free(src);
+		}
+		
 			//src_fd is the file descriptor for argv[f]
 			int src_fd = -1;
 			
@@ -91,7 +106,7 @@ int main(int argc, char **argv) {
 			//set src_fd to arv[f] 
 			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 				perror("open");
-				continue;
+	//			continue;
 			}
 			
 			//set size
@@ -125,8 +140,6 @@ int main(int argc, char **argv) {
 			printf("writing file %s\n", argv[f]);
 			
 			//writes the file
-			//goes to 'next' if write failed (?)
-			//mutexes here or in yffs.c (?)
 			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
 #if 0
@@ -140,7 +153,7 @@ int main(int argc, char **argv) {
 		next:
 			free(src_data);
 			close(src_fd);
-		}
+	//	}
 		
 		printf("unmounting...\n");
 		sffs_umount(&fs);
