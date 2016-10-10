@@ -77,8 +77,9 @@ int main(int argc, char **argv) {
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 
-		FILE *tmp;
-		tmp = fopen("temp.txt", "w");
+		FILE *tmp, *add;
+		char byte;
+		tmp = fopen("temp.txt", "ab");
 
 		if (argc == 4) {
 			f = 3; 
@@ -93,6 +94,15 @@ int main(int argc, char **argv) {
 			fwrite(src, 1, r, tmp);
 			free(src);
 		}
+		add = fopen(argv[f], "rb");
+
+
+		while (!feof(add)) {
+			fread(&byte, sizeof(char), 1, add);
+			fwrite(&byte, sizeof(char), 1, tmp);
+		}
+		fclose(tmp);
+		fclose(add);
 		
 		//src_fd is the file descriptor for argv[f]
 		int src_fd = -1;
@@ -106,13 +116,13 @@ int main(int argc, char **argv) {
 		printf("reading source %s...\n", argv[f]);
 			
 		//set src_fd to arv[f] 
-		if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
+	//	if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
+		if ((src_fd = open("temp.txt", O_RDONLY)) == -1) {
 			perror("open");
 		}
 			
 		//set size
 		src_size = lseek(src_fd, 0, SEEK_END);
-	//	src_size = lseek(src_fd, 0, SEEK_END) + buf.st_size;
 			
 		//check if size is legitimate
 		if (src_size == (off_t) -1) {
@@ -142,7 +152,7 @@ int main(int argc, char **argv) {
 		printf("writing file %s\n", argv[f]);
 			
 		//writes the file
-		if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
+		if (sffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0
 			memset(src_data, '@', src_size);
@@ -158,6 +168,7 @@ int main(int argc, char **argv) {
 		
 		printf("unmounting...\n");
 		sffs_umount(&fs);
+		//remove("temp.txt");
 		
 		close(fd);
 		return 0;
