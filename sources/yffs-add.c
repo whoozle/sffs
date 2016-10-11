@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
   printf("reading source %s...\n", argv[2]);
   if ((src_fd = open(argv[2], O_RDONLY)) == -1) {
     perror("open");
-    continue;
+    //continue;
   }
   src_size = lseek(src_fd, 0, SEEK_END);
   if (src_size == (off_t) -1) {
