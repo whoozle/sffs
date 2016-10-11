@@ -60,6 +60,7 @@ uint8_t *sffs_vector_append(struct sffs_vector *vec, size_t size) {
 	return vec->ptr + old_size;
 }
 
+//gets the filename at 'index'
 const char* sffs_filename(struct sffs *fs, size_t index) {
 	index *= sizeof(struct sffs_entry);
 	if (index < fs->files.size) {
