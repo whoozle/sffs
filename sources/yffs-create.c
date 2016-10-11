@@ -37,8 +37,8 @@ static int sffs_write_empty_header(struct sffs *fs, struct sffs_block *block) {
 /*
 * This is used to initalize a newly created yffs fs.  
 *
-* Args:
-* Out:  
+* Args: Struct 'sffs' - FS Container
+* Out:  Int - Indicates success or failure of adding a initial block to YFFS.
 */
 int sffs_format(struct sffs *fs) {
     struct sffs_block first_block;
@@ -53,15 +53,12 @@ static ssize_t fs_read_func(void *ptr, size_t size) { return read(fd, ptr, size)
 static off_t fs_seek_func(off_t offset, int whence) { return lseek(fd, offset, whence); }
 
 /* YFFS
-
 	This function is used to create a new YFFS filesystem. 
 	
-	Args:  FS Name, Size in Bytes.
-	Args:  FS Name, Size in Bytes.
+	Args:  FS Name = argv[1] FS Size = argv[2].
 	Out: Yffs
 	
 	Ex. yffs-create fsname 10000
-
 */
 
 int main(int argc, char **argv) {
