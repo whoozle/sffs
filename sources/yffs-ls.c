@@ -24,23 +24,23 @@ static off_t fs_seek_func(off_t offset, int whence) {
 }
 
 
-static int mount_image(struct sffs *fs, const char *fname) {
+static int mount_image(struct yffs *fs, const char *fname) {
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
 		return -1;
 	}
-	return sffs_mount(fs);
+	return yffs_mount(fs);
 }
 
 
-/* SFFS 
+/* yffs 
 
-	list:     ./sffs-tool fsname.img list  
+	list:     ./yffs-tool fsname.img list  
 
 */
 int main(int argc, char **argv) {
-  struct sffs fs;
+  struct yffs fs;
   if (argc < 2) {
     printf("usage: 	list:  ./yffs-ls fsname.img\n");     //hopefully eventually: "./yffs-ls fsname.img /path/to/dir"
     return 0;
@@ -57,14 +57,14 @@ int main(int argc, char **argv) {
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
 
-  for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
+  for(i = 0; (name = yffs_filename(&fs, i)) != 0; ++i) {
     printf("%s\n", name);
   }
 		
-  max = sffs_get_largest_free(&fs);
-  total = sffs_get_total_free(&fs);
+  max = yffs_get_largest_free(&fs);
+  total = yffs_get_total_free(&fs);
   printf("Free blocks, total: %zu, largest: %zu\n", total, max);
 
-  sffs_umount(&fs);
+  yffs_umount(&fs);
   return 0;
 }

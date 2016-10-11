@@ -18,7 +18,7 @@ static off_t fs_seek_func(off_t offset, int whence) {
 }
 
 
-static int mount_image(struct sffs *fs, const char *fname) {
+static int mount_image(struct yffs *fs, const char *fname) {
 	//opens argv[1] which is the fs
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
@@ -26,20 +26,20 @@ static int mount_image(struct sffs *fs, const char *fname) {
 		return -1;
 	}
 	//mounts fs, returns an int error/success code
-	return sffs_mount(fs);
+	return yffs_mount(fs);
 }
 
 
-/* SFFS 
+/* yffs 
 
-	createfs: ./sffs-tool fsname.img createfs 10000
-	write:    ./sffs-tool fsname.img write test.txt
-    read:     ./sffs-tool fsname.img read test.txt
-	remove:	  ./sffs-tool fsname.img remove test.txt
+	createfs: ./yffs-tool fsname.img createfs 10000
+	write:    ./yffs-tool fsname.img write test.txt
+    read:     ./yffs-tool fsname.img read test.txt
+	remove:	  ./yffs-tool fsname.img remove test.txt
 
-	list:     ./sffs-tool fsname.img list  
-	test:	  ./sffs-tool fsname.img test
-	wear:	  ./sffs-tool fsname.img wear
+	list:     ./yffs-tool fsname.img list  
+	test:	  ./yffs-tool fsname.img test
+	wear:	  ./yffs-tool fsname.img wear
 
 */
 int main(int argc, char **argv) {
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 		Usage: ./yffs-write filesystem original new
 		Rewrite code to append or rewrite file
 	*/
-	struct sffs fs;
+	struct yffs fs;
 	if (argc < 3) {
 		printf("Usage:\n\n"
 			   "\twrite:    ./yffs-write fsname.img newFile\n"
@@ -79,10 +79,10 @@ int main(int argc, char **argv) {
 			const char *fname = argv[2];
 			void *src;
 			ssize_t r;
-			sffs_stat(&fs, fname, &buf);
+			yffs_stat(&fs, fname, &buf);
 			printf("%s = %zu\n", fname, buf.st_size);
 			src = malloc(buf.st_size);
-			r = sffs_read(&fs, fname, src, buf.st_size);
+			r = yffs_read(&fs, fname, src, buf.st_size);
 			fwrite(src, 1, r, tmp);
 			free(src);
 		}
@@ -144,11 +144,11 @@ int main(int argc, char **argv) {
 		printf("writing file %s\n", argv[f]);
 			
 		//writes the file
-		if (sffs_write(&fs, argv[2], src_data, src_size) == -1)
+		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0
 			memset(src_data, '@', src_size);
-			sffs_read(&fs, argv[f], src_data, src_size);
+			yffs_read(&fs, argv[f], src_data, src_size);
 			fwrite(src_data, 1, src_size, stdout);
 #endif
 		/* 'next' appears to just close everything
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
 			close(src_fd);
 		
 		printf("unmounting...\n");
-		sffs_umount(&fs);
+		yffs_umount(&fs);
 		remove("temp.txt");
 		
 		close(fd);

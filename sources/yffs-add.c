@@ -34,17 +34,17 @@ static off_t fs_seek_func(off_t offset, int whence) {
 }
 
 
-static int mount_image(struct sffs *fs, const char *fname) {
+static int mount_image(struct yffs *fs, const char *fname) {
   fd = open(fname, O_RDWR);
   if (fd == -1) {
     perror("open");
     return -1;
   }
-  return sffs_mount(fs);
+  return yffs_mount(fs);
 }
 
 int main(int argc, char **argv) {
-  struct sffs fs;
+  struct yffs fs;
   if (argc < 3) {
     printf("Usage: yffs-add fs.img filename\n");
     return 0;
@@ -88,11 +88,11 @@ int main(int argc, char **argv) {
   close(src_fd);
   printf("writing file %s\n", argv[f]);
 			
-  if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
+  if (yffs_write(&fs, argv[f], src_data, src_size) == -1)
     goto next;
 #if 0
   memset(src_data, '@', src_size);
-  sffs_read(&fs, argv[f], src_data, src_size);
+  yffs_read(&fs, argv[f], src_data, src_size);
   fwrite(src_data, 1, src_size, stdout);
 #endif
  next:
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
   close(src_fd);
 		
   printf("unmounting...\n");
-  sffs_umount(&fs);
+  yffs_umount(&fs);
 		
   close(fd);
 	

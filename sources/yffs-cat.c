@@ -24,25 +24,25 @@ static off_t fs_seek_func(off_t offset, int whence) {
 }
 
 
-static int mount_image(struct sffs *fs, const char *fname) {
+static int mount_image(struct yffs *fs, const char *fname) {
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
 		return -1;
 	}
-	return sffs_mount(fs);
+	return yffs_mount(fs);
 }
 
 
-/* SFFS 
+/* yffs 
 
-    read:     ./sffs-tool fsname.img read test.txt
+    read:     ./yffs-tool fsname.img read test.txt
 	
 */
 int main(int argc, char **argv) {
-	struct sffs fs;
+	struct yffs fs;
 	if (argc < 3) {
-		printf("\tread:     ./sffs-tool fsname.img read test.txt\n");	
+		printf("\tread:     ./yffs-tool fsname.img read test.txt\n");	
 		return 0;
 	}
 
@@ -61,20 +61,20 @@ int main(int argc, char **argv) {
 			const char *fname = argv[f];
 			void *src;
 			ssize_t r;
-			if (sffs_stat(&fs, fname, &buf) == 1)
+			if (yffs_stat(&fs, fname, &buf) == 1)
 				continue;
 			printf("%s = %zu\n", fname, buf.st_size);
 			src = malloc(buf.st_size);
 			if (!src)
 				return 1;
 			
-			r = sffs_read(&fs, fname, src, buf.st_size);
+			r = yffs_read(&fs, fname, src, buf.st_size);
 			if (r < 0)
 				return 1;
 			fwrite(src, 1, r, stdout);
 			free(src);
 		}
-		sffs_umount(&fs);
+		yffs_umount(&fs);
 	
 	return 0;
 }
