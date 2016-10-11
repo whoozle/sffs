@@ -1,4 +1,4 @@
-#YFFS, version 1.1
+#YFFS
 ###CS307: Brian VerVaet, Max Molnar, Sam Spencer, Wyatt Dahlenburg, Zachary Kent
 
   Many types of devices use Flash for persistent storage. In situations where power fluctuates (batteries running out, 

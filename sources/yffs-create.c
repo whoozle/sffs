@@ -1,9 +1,17 @@
 /*Team 22*/
 
 #include "yffs.h"
-
-
 #define SFFS_HEADER_SIZE (16)
+
+/*
+* This is used to initalize a newly created yffs fs.  
+*
+* Args: Struct 'sffs' - FS Container
+*		Struct 'sffs_block' - Pointer to empty first block
+*
+* Out:  Int - Indicates success of failure of writing the empty header to the first block.
+*/
+
 static int sffs_write_empty_header(struct sffs *fs, struct sffs_block *block) {
     size_t size = block->end - block->begin;
     if (size <= SFFS_HEADER_SIZE) {
@@ -23,10 +31,15 @@ static int sffs_write_empty_header(struct sffs *fs, struct sffs_block *block) {
     
     *((uint32_t *)&header[1]) = htole32(size - SFFS_HEADER_SIZE);
     
-    return (fs->write(&header, sizeof(header)) == sizeof(header))? 0: -1;
+    return (fs->write(&header, sizeof(header)) == sizeof(header))? 0: -1; 
 }
 
-
+/*
+* This is used to initalize a newly created yffs fs.  
+*
+* Args: Struct 'sffs' - FS Container
+* Out:  Int - Indicates success or failure of adding a initial block to YFFS.
+*/
 int sffs_format(struct sffs *fs) {
     struct sffs_block first_block;
     first_block.begin = 0;
@@ -40,12 +53,12 @@ static ssize_t fs_read_func(void *ptr, size_t size) { return read(fd, ptr, size)
 static off_t fs_seek_func(off_t offset, int whence) { return lseek(fd, offset, whence); }
 
 /* YFFS
-
 	This function is used to create a new YFFS filesystem. 
-	Args:  FS Name, Size in Bytes.
+	
+	Args:  FS Name = argv[1] FS Size = argv[2].
+	Out: Yffs
 	
 	Ex. yffs-create fsname 10000
-
 */
 
 int main(int argc, char **argv) {
@@ -55,13 +68,14 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	fs.write = fs_write_func;
+	fs.write = fs_write_func; //!! when yffs calls 'write' it is actually calling fs_write which is defined above.
 	fs.read = fs_read_func;
 	fs.seek = fs_seek_func;
 	fs.device_name = strdup(argv[1]); 
 	fs.device_size = atoi(argv[2]);
+	
 	if (fs.device_size < 32) {
-		printf("YFFS must be greater then 32 bytes!\n");
+		printf("YFFS must be greater then 32 bytes!\n"); //This is to allow the inital empty header and one additional memory allocation.
 		return 1;
 	}
 	
