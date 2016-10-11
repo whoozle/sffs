@@ -1,14 +1,6 @@
 /*Team 22*/
 
 #include "yffs.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-
 
 static int fd;
 
@@ -54,13 +46,14 @@ int main(int argc, char **argv) {
 	/*
 	TO DO:
 		Redo arguments to accept a flag (-a, -r) 
-		Usage: ./yffs-write -flag filesystem text
+		Usage: ./yffs-write filesystem original new
 		Rewrite code to append or rewrite file
 	*/
 	struct sffs fs;
 	if (argc < 3) {
 		printf("Usage:\n\n"
-			   "\twrite:    ./yffs-write fsname.img test.txt\n");	
+			   "\twrite:    ./yffs-write fsname.img newFile\n"
+			"\twrite: 	./yffs-write fsname.img orignal new\n");	
 		return 0;
 	}
 
@@ -70,63 +63,89 @@ int main(int argc, char **argv) {
 
 
 //WRITE TO FILESYSTEM
-		int f;
+		int f = 2;
 		
 		//mount system named at argv[1], return if it failed
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
-		//loops through all args not including yffs command and fs name
-		for(f = 2; f < argc; ++f) {
-			//src_fd is an error checker
-			int src_fd = -1;
+
+		FILE *tmp, *add;
+		char byte;
+		tmp = fopen("temp.txt", "ab");
+
+		if (argc == 4) {
+			f = 3; 
+			struct stat buf;
+			const char *fname = argv[2];
+			void *src;
+			ssize_t r;
+			sffs_stat(&fs, fname, &buf);
+			printf("%s = %zu\n", fname, buf.st_size);
+			src = malloc(buf.st_size);
+			r = sffs_read(&fs, fname, src, buf.st_size);
+			fwrite(src, 1, r, tmp);
+			free(src);
+		}
+		add = fopen(argv[f], "rb");
+
+
+		while (!feof(add)) {
+			fread(&byte, sizeof(char), 1, add);
+			fwrite(&byte, sizeof(char), 1, tmp);
+		}
+		fclose(tmp);
+		fclose(add);
+		
+		//src_fd is the file descriptor for argv[f]
+		int src_fd = -1;
 			
-			//size
-			off_t src_size = 0;
+		//offset
+		off_t src_size = 0;
 			
-			//actual data to be written
-			void *src_data = 0;
+		//buffer
+		void *src_data = 0;
 			
-			printf("reading source %s...\n", argv[f]);
+		printf("reading source %s...\n", argv[f]);
 			
-			//open file - need to use O_APPEND if flagged
-			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
-				perror("open");
-				continue;
-			}
+		//set src_fd to arv[f] 
+	//	if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
+		if ((src_fd = open("temp.txt", O_RDONLY)) == -1) {
+			perror("open");
+		}
 			
-			//set size 
-			src_size = lseek(src_fd, 0, SEEK_END);
+		//set size
+		src_size = lseek(src_fd, 0, SEEK_END);
 			
-			//check if size is legitimate
-			if (src_size == (off_t) -1) {
-				perror("lseek");
-				goto next;
-			}
+		//check if size is legitimate
+		if (src_size == (off_t) -1) {
+			perror("lseek");
+			goto next;
+		}
 			
-			//make space in memory for data
-			src_data = malloc(src_size);
+		//make space in memory for data
+		src_data = malloc(src_size);
 			
-			//checks malloc
-			if (src_data == NULL) {
-				perror("malloc");
-				goto next;
-			}
+		//checks malloc
+		if (src_data == NULL) {
+			perror("malloc");
+			goto next;
+		}
 	
-			lseek(src_fd, 0, SEEK_SET);
+		lseek(src_fd, 0, SEEK_SET);
 			
-			//compares actual size to variable "src_size"
-			if (read(src_fd, src_data, src_size) != src_size) {
-				perror("short read");
-				goto next;
-			}
-			close(src_fd);
-			printf("writing file %s\n", argv[f]);
+		//reads from argv[f]->src_data
+		if (read(src_fd, src_data, src_size) != src_size) {
+			perror("short read");
+			goto next;
+		}
 			
-			//writes the file
-			//goes to 'next' if write failed (?)
-			//mutexes here or in yffs.c (?)
-			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
-				goto next;
+		//no longer need arv[f]
+		close(src_fd);
+		printf("writing file %s\n", argv[f]);
+			
+		//writes the file
+		if (sffs_write(&fs, argv[2], src_data, src_size) == -1)
+			goto next;
 #if 0
 			memset(src_data, '@', src_size);
 			sffs_read(&fs, argv[f], src_data, src_size);
@@ -138,10 +157,10 @@ int main(int argc, char **argv) {
 		next:
 			free(src_data);
 			close(src_fd);
-		}
 		
 		printf("unmounting...\n");
 		sffs_umount(&fs);
+		remove("temp.txt");
 		
 		close(fd);
 		return 0;
