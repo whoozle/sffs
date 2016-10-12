@@ -1,20 +1,35 @@
 /*Team 22*/
 
 #include "yffs.h"
+#include <pthread.h>
 
 static int fd;
+static pthread_mutex_t mutex;
+
 
 
 static ssize_t fs_write_func(const void *ptr, size_t size) {
-	return write(fd, ptr, size);
+	pthread_mutex_lock(&mutex);
+	int wr = write(fd, ptr, size);
+	pthread_mutex_unlock(&mutex);
+
+	return wr; 
 }
 
 static ssize_t fs_read_func(void *ptr, size_t size) {
-	return read(fd, ptr, size);
+	pthread_mutex_lock(&mutex);
+	int rd = read(fd, ptr, size);
+	pthread_mutex_unlock(&mutex);
+
+	return rd; 
 }
 
 static off_t fs_seek_func(off_t offset, int whence) {
-	return lseek(fd, offset, whence);
+	pthread_mutex_lock(&mutex);
+	int lsk = lseek(fd, offset, whence);
+	pthread_mutex_unlock(&mutex);
+
+	return lsk; 
 }
 
 
@@ -50,6 +65,8 @@ int main(int argc, char **argv) {
 		Rewrite code to append or rewrite file
 	*/
 	struct yffs fs;
+	pthread_mutex_init(&mutex, NULL);
+
 	if (argc < 3) {
 		printf("Usage:\n\n"
 			   "\twrite:    ./yffs-write fsname.img newFile\n"
