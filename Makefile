@@ -23,7 +23,7 @@ yffs-add: sources/yffs.o sources/yffs-add.o
 
 # Use install command to send binarys to /usr/local/bin
 # Requires SU
-install: yffs-ls yffs-cat yffs-create yffs-touch yffs-rm yffs-write
+install: yffs-ls yffs-cat yffs-create yffs-add yffs-rm yffs-edit
 	@mv bin/yffs-ls /usr/local/bin
 	@mv bin/yffs-cat /usr/local/bin
 	@mv bin/yffs-create /usr/local/bin
