@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     goto next;
   }
   close(src_fd);
-  //printf("writing file %s\n", argv[2]);
+  printf("Writing file %s\n", argv[2]);
 			
   if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
     goto next;
