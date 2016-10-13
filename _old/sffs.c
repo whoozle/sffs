@@ -2,14 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#if defined(_WINDOWS) || defined(_WIN32)
-#	define htole32(x) (x)
-#	define le32toh(x) (x)
-#else
-/*For SEEK_XXX macros. Consider to move 'em to sffs.h with similar name*/
-#	include <unistd.h>
-#	include <endian.h>
-#endif
+#include <unistd.h>
+#include <endian.h>
 
 #define SFFS_HEADER_SIZE (16)
 
@@ -571,7 +565,6 @@ error:
 	sffs_umount(fs);
 	return -1;
 }
-
 
 
 int sffs_umount(struct sffs *fs) {

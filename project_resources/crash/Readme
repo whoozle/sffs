@@ -1,0 +1,13 @@
+Author: Wyatt Dahlenburg (wdahlenb@purdue.edu)
+
+We used a raspberry pi to simulate the file system.
+
+There are multiple ways to go about crashing a raspberry pi.
+
+The first is to send the reboot command. This was implemented in the Crasher.sh script. The script uses a large file (19MB) and tries to shutoff the pi in the middle of the write operation. This is used to test the fault-tolerance of the software. We expect no information to be written to the file container. After the reboot the user should run yffs-ls iso.img and see that no passwords.txt file has been written. 
+
+The second way is to take advantage of the gpio pins on the raspberry pi. Pins 4 and 6 were used and the circuit is explained in RPI_switch.png. GPIO4 is ground and GPIO6 is power. With the use of a push button a short can be made which causes the pi to reboot. This can be used for physical testing in the middle of a write operation. 
+
+The final way to crash the pi would be to break it. This can be accomplished by power surge or physical destruction of the device. At the current time we don't have any spare raspberry pis to dispose of. In theory our code should work, but we do not have the physical and monetary resources to test this method. 
+
+The first two options are easy to test and provide decent grounds for testing fault-tolerance.
