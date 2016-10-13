@@ -203,7 +203,11 @@ static int yffs_compact(struct yffs *fs) {
 	size_t i, n = fs->free.size / sizeof(struct yffs_block);
 	if (n < 2)
 		return 0;
+<<<<<<< HEAD
 	//LOG_ERROR(("yffs: compacting free space..."));
+=======
+	//LOG_DEBUG(("yffs: compacting free space..."));
+>>>>>>> origin/Brian
 	--n;
 	for(i = 0; i < n; ) {
 		size_t j = i + 1;
@@ -255,7 +259,11 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 static int yffs_unlink_at(struct yffs *fs, size_t pos) {
 	struct yffs_entry *file = ((struct yffs_entry *)fs->files.ptr) + pos;
 	struct yffs_block *free_block;
+<<<<<<< HEAD
 	//LOG_ERROR(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
+=======
+	// LOG_DEBUG(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
+>>>>>>> origin/Brian
 	file->block.mtime = (uint32_t)time(0);
 	if (yffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 		return -1;
@@ -419,13 +427,13 @@ ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size) {
 
 	file = ((struct yffs_entry *)fs->files.ptr) + pos;
 
-	char *user = (char *)malloc(sizeof(char)*10);
+	/*char *user = (char *)malloc(sizeof(char)*10);
 	if(getlogin_r(user, 10) != 0)
 	  printf("problem getting user login...\n");
 	if(strcmp(user, file->owner) != 0) {
 	  printf("user is not the owner of the file...\n");
 	  return -1;
-	}
+	  }*/
 
 	if (size > file->size)
 		size = file->size;
@@ -538,7 +546,11 @@ int yffs_mount(struct yffs *fs) {
 			}
 			file->size = block_size - filename_len - padding;
 			file->name[filename_len] = 0;
+<<<<<<< HEAD
 			//LOG_ERROR(("yffs: read file %s -> %zu", file->name, file->size));
+=======
+			// LOG_DEBUG(("yffs: read file %s -> %zu", file->name, file->size));
+>>>>>>> origin/Brian
 			file->block = block;
 		} else {
 			struct yffs_block *free;
@@ -547,7 +559,11 @@ int yffs_mount(struct yffs *fs) {
 				goto error;
 			free = (struct yffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
+<<<<<<< HEAD
 			//LOG_ERROR(("yffs: free space %zu->%zu", block.begin, block.end));
+=======
+			// LOG_DEBUG(("yffs: free space %zu->%zu", block.begin, block.end));
+>>>>>>> origin/Brian
 			if (free->end > fs->device_size)  {
 				//LOG_ERROR(("yffs: free spaces crosses device bound!"));
 				free->end = fs->device_size;
@@ -579,7 +595,11 @@ int yffs_mount(struct yffs *fs) {
 	if (yffs_compact(fs) == -1)
 		goto error;
 	
+<<<<<<< HEAD
 	//LOG_ERROR(("yffs: mounted!"));
+=======
+	// LOG_DEBUG(("yffs: mounted!"));
+>>>>>>> origin/Brian
 	return 0;
 	
 error:
