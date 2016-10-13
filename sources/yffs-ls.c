@@ -11,16 +11,32 @@
 
 
 static int fd;
+static pthread_mutex_t mutex;
+
+
+
 static ssize_t fs_write_func(const void *ptr, size_t size) {
-	return write(fd, ptr, size);
+	pthread_mutex_lock(&mutex);
+	int wr = write(fd, ptr, size);
+	pthread_mutex_unlock(&mutex);
+
+	return wr; 
 }
 
 static ssize_t fs_read_func(void *ptr, size_t size) {
-	return read(fd, ptr, size);
+	pthread_mutex_lock(&mutex);
+	int rd = read(fd, ptr, size);
+	pthread_mutex_unlock(&mutex);
+
+	return rd; 
 }
 
 static off_t fs_seek_func(off_t offset, int whence) {
-	return lseek(fd, offset, whence);
+	pthread_mutex_lock(&mutex);
+	int lsk = lseek(fd, offset, whence);
+	pthread_mutex_unlock(&mutex);
+
+	return lsk; 
 }
 
 
