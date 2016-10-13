@@ -18,8 +18,6 @@ While a number of open source file systems exist, and some of those feature faul
 
   Functional Requirements:
 	* As a user, I would like to be able to create a filesystem
-	* As a user, I would like to be able to mount a filesystem
-	* As a user, I would like to be able to unmount a filesystem
 	* As a user, I would like to be able to add files to the filesystem
 	* As a user, I would like to be able to remove files from the filesystem
 	* As a user, I would like to be able to read files in the filesystem
@@ -38,8 +36,6 @@ While a number of open source file systems exist, and some of those feature faul
   Non-Functional Requirements:
 	* We must be able to implement this on many different devices.
 	* The encryption interface should work quickly.
-	* The system will mount directly to Linux (if time allows_
-	* The system will be functional with Linux utilities (mkfs, mount, umount, etc.) 
-	* The system will mount to embedded devices (if time allows)
+	* The system will mount to embedded devices.
 	* Documentation will be efficient and concise (explain command usage, functionality, etc.)
 	* The interface should be user friendly

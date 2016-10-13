@@ -34,39 +34,39 @@ static off_t fs_seek_func(off_t offset, int whence) {
 }
 
 
-static int mount_image(struct sffs *fs, const char *fname) {
+static int mount_image(struct yffs *fs, const char *fname) {
 	fd = open(fname, O_RDWR);
 	if (fd == -1) {
 		perror("open");
 		return -1;
 	}
-	return sffs_mount(fs);
+	return yffs_mount(fs);
 }
 
 
-/* SFFS 
+/* yffs 
 
-	createfs: ./sffs-tool fsname.img createfs 10000
-	write:    ./sffs-tool fsname.img write test.txt
-    read:     ./sffs-tool fsname.img read test.txt
-	remove:	  ./sffs-tool fsname.img remove test.txt
+	createfs: ./yffs-tool fsname.img createfs 10000
+	write:    ./yffs-tool fsname.img write test.txt
+    read:     ./yffs-tool fsname.img read test.txt
+	remove:	  ./yffs-tool fsname.img remove test.txt
 
-	list:     ./sffs-tool fsname.img list  
-	test:	  ./sffs-tool fsname.img test
-	wear:	  ./sffs-tool fsname.img wear
+	list:     ./yffs-tool fsname.img list  
+	test:	  ./yffs-tool fsname.img test
+	wear:	  ./yffs-tool fsname.img wear
 
 */
 int main(int argc, char **argv) {
-	struct sffs fs;
+	struct yffs fs;
 	if (argc < 3) {
 		printf("Usage:\n\n"
-			   "\tcreatefs: ./sffs-tool fsname.img createfs 10000\n"
-			   "\twrite:    ./sffs-tool fsname.img write test.txt\n"
-			   "\tread:     ./sffs-tool fsname.img read test.txt\n"
-			   "\tremove:	  ./sffs-tool fsname.img remove test.txt\n\n"
-		       "\tlist:     ./sffs-tool fsname.img list\n"  
-			   "\ttest:	  ./sffs-tool fsname.img test\n"
-			   "\twear:	  ./sffs-tool fsname.img wear\n\n");	
+			   "\tcreatefs: ./yffs-tool fsname.img createfs 10000\n"
+			   "\twrite:    ./yffs-tool fsname.img write test.txt\n"
+			   "\tread:     ./yffs-tool fsname.img read test.txt\n"
+			   "\tremove:	  ./yffs-tool fsname.img remove test.txt\n\n"
+		       "\tlist:     ./yffs-tool fsname.img list\n"  
+			   "\ttest:	  ./yffs-tool fsname.img test\n"
+			   "\twear:	  ./yffs-tool fsname.img wear\n\n");	
 		return 0;
 	}
 
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 //CREATE FILESYSTEM
 	if (strcmp(argv[2], "createfs") == 0) {
 		if (argc < 4) {
-			printf("usage: 	createfs: ./sffs-tool fsname.img createfs 10000	\n");
+			printf("usage: 	createfs: ./yffs-tool fsname.img createfs 10000	\n");
 			return 0;
 		}
 		fs.device_size = atoi(argv[3]);
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 				perror("open");
 				return 1;
 			}
-			sffs_format(&fs);
+			yffs_format(&fs);
 			close(fd);
 			
 			if (truncate(argv[1], fs.device_size) == -1)
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
 		int f;
 	
 		if (argc < 4) {
-			printf("usage:	write: ./sffs-tool fsname.img write test.txt  \n");
+			printf("usage:	write: ./yffs-tool fsname.img write test.txt  \n");
 			return 0;
 		}
 		
@@ -142,11 +142,11 @@ int main(int argc, char **argv) {
 			close(src_fd);
 			printf("writing file %s\n", argv[f]);
 			
-			if (sffs_write(&fs, argv[f], src_data, src_size) == -1)
+			if (yffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
 #if 0
 			memset(src_data, '@', src_size);
-			sffs_read(&fs, argv[f], src_data, src_size);
+			yffs_read(&fs, argv[f], src_data, src_size);
 			fwrite(src_data, 1, src_size, stdout);
 #endif
 		next:
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
 		}
 		
 		printf("unmounting...\n");
-		sffs_umount(&fs);
+		yffs_umount(&fs);
 		
 		close(fd);
 	} 
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
 	else if (strcmp(argv[2], "read") == 0) {
 		int f;
 		if (argc < 4) {
-			printf("usage: read:  ./sffs-tool fsname.img read test.txt  \n");
+			printf("usage: read:  ./yffs-tool fsname.img read test.txt  \n");
 			return 0;
 		}
 		if (mount_image(&fs, argv[1]) == -1)
@@ -175,20 +175,20 @@ int main(int argc, char **argv) {
 			const char *fname = argv[f];
 			void *src;
 			ssize_t r;
-			if (sffs_stat(&fs, fname, &buf) == 1)
+			if (yffs_stat(&fs, fname, &buf) == 1)
 				continue;
 			printf("%s = %zu\n", fname, buf.st_size);
 			src = malloc(buf.st_size);
 			if (!src)
 				return 1;
 			
-			r = sffs_read(&fs, fname, src, buf.st_size);
+			r = yffs_read(&fs, fname, src, buf.st_size);
 			if (r < 0)
 				return 1;
 			fwrite(src, 1, r, stdout);
 			free(src);
 		}
-		sffs_umount(&fs);
+		yffs_umount(&fs);
 	} 	
 
 //LIST OBJECTS IN FILESYSTEM
@@ -197,39 +197,39 @@ int main(int argc, char **argv) {
 		size_t i, total, max;
 
 		if (argc < 3) {
-			printf("usage: 	list:  ./sffs-tool fsname.img list  \n");
+			printf("usage: 	list:  ./yffs-tool fsname.img list  \n");
 			return 0;
 		}
 
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 
-		for(i = 0; (name = sffs_filename(&fs, i)) != 0; ++i) {
+		for(i = 0; (name = yffs_filename(&fs, i)) != 0; ++i) {
 			printf("%s\n", name);
 		}
 		
-		max = sffs_get_largest_free(&fs);
-		total = sffs_get_total_free(&fs);
+		max = yffs_get_largest_free(&fs);
+		total = yffs_get_total_free(&fs);
 		printf("Free blocks, total: %zu, largest: %zu\n", total, max);
 
-		sffs_umount(&fs);
+		yffs_umount(&fs);
 	}
 
 //REMOVE ITEM FROM FILESYSTEM	
 	else if (strcmp(argv[2], "remove") == 0) {
 		int f;
 		if (argc < 4) {
-			printf("usage: remove:  ./sffs-tool fsname.img remove test.txt  \n");
+			printf("usage: remove:  ./yffs-tool fsname.img remove test.txt  \n");
 			return 0;
 		}
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 
 		for(f = 3; f < argc; ++f) {
-			sffs_unlink(&fs, argv[f]);
+			yffs_unlink(&fs, argv[f]);
 		}
 
-		sffs_umount(&fs);
+		yffs_umount(&fs);
 	} 
 
 //TEST THE FILESYSTEM
@@ -241,23 +241,23 @@ else if (strcmp(argv[2], "test") == 0) {
 		if (mount_image(&fs, argv[1]) == -1)
 			return 2;
 
-		sffs_write(&fs, "f1", buf, 4);
-		sffs_write(&fs, "f2", buf, 4);
-		sffs_write(&fs, "f3", buf, 4);
-		sffs_write(&fs, "f1", buf, 4);
-		sffs_write(&fs, "f2", buf, 4);
-		sffs_write(&fs, "f3", buf, 30);
-		sffs_write(&fs, "f1", buf, 4);
-		sffs_write(&fs, "f2", buf, 4);
-		sffs_write(&fs, "f3", buf, 60);
-		sffs_write(&fs, "f1", buf, 4);
-		sffs_write(&fs, "f2", buf, 4);
-		sffs_write(&fs, "f3", buf, 90);
-		sffs_write(&fs, "f1", buf, 4);
-		sffs_write(&fs, "f2", buf, 4);
-		sffs_write(&fs, "f3", buf, 120);
+		yffs_write(&fs, "f1", buf, 4);
+		yffs_write(&fs, "f2", buf, 4);
+		yffs_write(&fs, "f3", buf, 4);
+		yffs_write(&fs, "f1", buf, 4);
+		yffs_write(&fs, "f2", buf, 4);
+		yffs_write(&fs, "f3", buf, 30);
+		yffs_write(&fs, "f1", buf, 4);
+		yffs_write(&fs, "f2", buf, 4);
+		yffs_write(&fs, "f3", buf, 60);
+		yffs_write(&fs, "f1", buf, 4);
+		yffs_write(&fs, "f2", buf, 4);
+		yffs_write(&fs, "f3", buf, 90);
+		yffs_write(&fs, "f1", buf, 4);
+		yffs_write(&fs, "f2", buf, 4);
+		yffs_write(&fs, "f3", buf, 120);
 		
-		sffs_umount(&fs);
+		yffs_umount(&fs);
 	} 
 
 //CHECK FILESYSTEM WEAR
@@ -272,16 +272,16 @@ else if (strcmp(argv[2], "test") == 0) {
 		fs.write = emu_write_func;
 		fs.seek = emu_seek_func;
 		fs.device_size = EMU_DEVICE_SIZE;
-		if (sffs_format(&fs) == -1)
+		if (yffs_format(&fs) == -1)
 			return 2;
 
-		if (sffs_mount(&fs) == -1)
+		if (yffs_mount(&fs) == -1)
 			return 2;
 		
 		for(i = 0; i < EMU_DEVICE_SIZE; ++i) {
 			size_t fsize = rand() & 0xff;
 			char name[2] = {'a' + (rand() % 26), 0};
-			if (sffs_write(&fs, name, buf, fsize) == -1) 
+			if (yffs_write(&fs, name, buf, fsize) == -1) 
 				break;
 		}
 		
@@ -292,19 +292,19 @@ else if (strcmp(argv[2], "test") == 0) {
 		}
 		fprintf(stderr, ";total %lu -> ~%g writes average\n", total, 1.0f * total / EMU_DEVICE_SIZE);
 
-		sffs_umount(&fs);
+		yffs_umount(&fs);
 		
 	} 
 
 //HANDLES BAD INPUT
 	else {
-		printf("Usage:\n\n\tcreatefs: ./sffs-tool fsname.img createfs 10000\n"
-			   "\twrite:    ./sffs-tool fsname.img write test.txt\n"
-			   "\tread:     ./sffs-tool fsname.img read test.txt\n"
-			   "\tremove:	  ./sffs-tool fsname.img remove test.txt\n\n"
-		       "\tlist:     ./sffs-tool fsname.img list\n"  
-			   "\ttest:	  ./sffs-tool fsname.img test\n"
-			   "\twear:	  ./sffs-tool fsname.img wear\n\n");	
+		printf("Usage:\n\n\tcreatefs: ./yffs-tool fsname.img createfs 10000\n"
+			   "\twrite:    ./yffs-tool fsname.img write test.txt\n"
+			   "\tread:     ./yffs-tool fsname.img read test.txt\n"
+			   "\tremove:	  ./yffs-tool fsname.img remove test.txt\n\n"
+		       "\tlist:     ./yffs-tool fsname.img list\n"  
+			   "\ttest:	  ./yffs-tool fsname.img test\n"
+			   "\twear:	  ./yffs-tool fsname.img wear\n\n");	
 	}
 	
 	return 0;
