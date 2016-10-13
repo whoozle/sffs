@@ -93,7 +93,6 @@ int main(int argc, char **argv) {
 	}
 	//Only print output on errors
 	//printf("YFFS creation successful!\n \'%s\' -> size: %u bytes\n",argv[1], (unsigned)fs.device_size);
-	printf("File \'%s\' created", argv[1], (unsigned)fs.device_size);
 	return 0;
 }
 
