@@ -102,6 +102,10 @@ int main(int argc, char **argv) {
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
 			//printf("%s = %zu\n", fname, buf.st_size);
+			if (buf.st_size > 10000) {
+				printf("File not found\n");
+				exit(1);
+			}
 			src = malloc(buf.st_size);
 			r = yffs_read(&fs, fname, src, buf.st_size);
 			fwrite(src, 1, r, tmp);
