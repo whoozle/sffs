@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 			printf("size must be greater than 32 bytes\n");
 			return 1;
 		}
-		printf("!~creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
+		//printf("!~creating filesystem... (size: %u)\n", (unsigned)fs.device_size);
 		{
 			fd = open(argv[1], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			if (fd == -1) {
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 			off_t src_size = 0;
 			void *src_data = 0;
 			
-			printf("reading source %s...\n", argv[f]);
+			//printf("reading source %s...\n", argv[f]);
 			if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 				perror("open");
 				continue;
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
 				goto next;
 			}
 			close(src_fd);
-			printf("writing file %s\n", argv[f]);
+			//printf("writing file %s\n", argv[f]);
 			
 			if (yffs_write(&fs, argv[f], src_data, src_size) == -1)
 				goto next;
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
 			close(src_fd);
 		}
 		
-		printf("unmounting...\n");
+		//printf("unmounting...\n");
 		yffs_umount(&fs);
 		
 		close(fd);
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
 		
 		max = yffs_get_largest_free(&fs);
 		total = yffs_get_total_free(&fs);
-		printf("Free blocks, total: %zu, largest: %zu\n", total, max);
+		//printf("Free blocks, total: %zu, largest: %zu\n", total, max);
 
 		yffs_umount(&fs);
 	}
@@ -287,7 +287,7 @@ else if (strcmp(argv[2], "test") == 0) {
 		
 		for(i = 0; i < EMU_DEVICE_SIZE; ++i) {
 			uint32_t hits = emu_device_stat[i];
-			printf("%u;\n", hits);
+			//printf("%u;\n", hits);
 			total += hits;
 		}
 		fprintf(stderr, ";total %lu -> ~%g writes average\n", total, 1.0f * total / EMU_DEVICE_SIZE);
