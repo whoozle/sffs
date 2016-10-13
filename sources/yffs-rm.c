@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
 
 	for(f = 2; f < argc; ++f) {
 		yffs_unlink(&fs, argv[f]);
+		printf("Removed \'%s\'\n", argv[f]);
 	}
 
 	
