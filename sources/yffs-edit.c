@@ -1,20 +1,35 @@
 /*Team 22*/
 
 #include "yffs.h"
+#include <pthread.h>
 
 static int fd;
+static pthread_mutex_t mutex;
+
 
 
 static ssize_t fs_write_func(const void *ptr, size_t size) {
-	return write(fd, ptr, size);
+	pthread_mutex_lock(&mutex);
+	int wr = write(fd, ptr, size);
+	pthread_mutex_unlock(&mutex);
+
+	return wr; 
 }
 
 static ssize_t fs_read_func(void *ptr, size_t size) {
-	return read(fd, ptr, size);
+	pthread_mutex_lock(&mutex);
+	int rd = read(fd, ptr, size);
+	pthread_mutex_unlock(&mutex);
+
+	return rd; 
 }
 
 static off_t fs_seek_func(off_t offset, int whence) {
-	return lseek(fd, offset, whence);
+	pthread_mutex_lock(&mutex);
+	int lsk = lseek(fd, offset, whence);
+	pthread_mutex_unlock(&mutex);
+
+	return lsk; 
 }
 
 
@@ -50,6 +65,8 @@ int main(int argc, char **argv) {
 		Rewrite code to append or rewrite file
 	*/
 	struct yffs fs;
+	pthread_mutex_init(&mutex, NULL);
+
 	if (argc < 3) {
 		printf("Usage:\n\n"
 			   "\twrite:    ./yffs-write fsname.img newFile\n"
@@ -73,25 +90,43 @@ int main(int argc, char **argv) {
 		char byte;
 		tmp = fopen("temp.txt", "ab");
 
-		if (argc == 4) {
+		if (argc != 3) {
 			f = 3; 
+			if (access(argv[f], F_OK) == -1) {
+				printf("File not found\n");
+				exit(1);
+			}
 			struct stat buf;
 			const char *fname = argv[2];
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
-			printf("%s = %zu\n", fname, buf.st_size);
+			//printf("%s = %zu\n", fname, buf.st_size);
+			if (buf.st_size > 10000) {
+				printf("File not found\n");
+				exit(1);
+			}
 			src = malloc(buf.st_size);
 			r = yffs_read(&fs, fname, src, buf.st_size);
 			fwrite(src, 1, r, tmp);
 			free(src);
 		}
-		add = fopen(argv[f], "rb");
+		
+		if (argc > 4) {
+			int i; 
+			for (i = 3; i < argc; i++) {
+			}
 
-
-		while (!feof(add)) {
-			fread(&byte, sizeof(char), 1, add);
-			fwrite(&byte, sizeof(char), 1, tmp);
+		} else {
+			if (access(argv[f], F_OK) == -1) {
+				printf("File not found\n");
+				exit(1);
+			}
+			add = fopen(argv[f], "rb");
+			while (!feof(add)) {
+				fread(&byte, sizeof(char), 1, add);
+				fwrite(&byte, sizeof(char), 1, tmp);
+			}
 		}
 		fclose(tmp);
 		fclose(add);
@@ -105,7 +140,7 @@ int main(int argc, char **argv) {
 		//buffer
 		void *src_data = 0;
 			
-		printf("reading source %s...\n", argv[f]);
+		//printf("reading source %s...\n", argv[f]);
 			
 		//set src_fd to arv[f] 
 	//	if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
@@ -141,7 +176,7 @@ int main(int argc, char **argv) {
 			
 		//no longer need arv[f]
 		close(src_fd);
-		printf("writing file %s\n", argv[f]);
+		//printf("writing file %s\n", argv[f]);
 			
 		//writes the file
 		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
@@ -158,7 +193,7 @@ int main(int argc, char **argv) {
 			free(src_data);
 			close(src_fd);
 		
-		printf("unmounting...\n");
+		//printf("unmounting...\n");
 		yffs_umount(&fs);
 		remove("temp.txt");
 		

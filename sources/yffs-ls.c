@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 		
   max = yffs_get_largest_free(&fs);
   total = yffs_get_total_free(&fs);
-  printf("Free blocks, total: %zu, largest: %zu\n", total, max);
+  //printf("Free blocks, total: %zu, largest: %zu\n", total, max);
 
   yffs_umount(&fs);
   return 0;

@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 			ssize_t r;
 			if (yffs_stat(&fs, fname, &buf) == 1)
 				continue;
-			printf("%s = %zu\n", fname, buf.st_size);
+			//printf("%s = %zu\n", fname, buf.st_size);
 			src = malloc(buf.st_size);
 			if (!src)
 				return 1;
