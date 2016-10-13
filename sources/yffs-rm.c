@@ -10,17 +10,7 @@
 #include <assert.h>
 
 
-//Used during 'wear' test
-#define EMU_DEVICE_SIZE (0x10000)
 static int fd;
-static uint8_t emu_device[EMU_DEVICE_SIZE];
-static unsigned emu_device_stat[EMU_DEVICE_SIZE];
-static unsigned emu_device_pos;
-static ssize_t emu_write_func(const void *ptr, size_t size); 
-static ssize_t emu_read_func(void *ptr, size_t size); 
-static off_t emu_seek_func(off_t offset, int whence); 
-
-
 static ssize_t fs_write_func(const void *ptr, size_t size) {
 	return write(fd, ptr, size);
 }
@@ -43,7 +33,6 @@ static int mount_image(struct yffs *fs, const char *fname) {
 	return yffs_mount(fs);
 }
 
-
 /* yffs 
 
 	createfs: ./yffs-tool fsname.img createfs 10000
@@ -58,22 +47,12 @@ static int mount_image(struct yffs *fs, const char *fname) {
 */
 int main(int argc, char **argv) {
 	struct yffs fs;
-	if (argc < 3) {
-		printf("Usage:\n\n"
-			   "\tcreatefs: ./yffs-tool fsname.img createfs 10000\n"
-			   "\twrite:    ./yffs-tool fsname.img write test.txt\n"
-			   "\tread:     ./yffs-tool fsname.img read test.txt\n"
-			   "\tremove:	  ./yffs-tool fsname.img remove test.txt\n\n"
-		       "\tlist:     ./yffs-tool fsname.img list\n"  
-			   "\ttest:	  ./yffs-tool fsname.img test\n"
-			   "\twear:	  ./yffs-tool fsname.img wear\n\n");	
-		return 0;
-	}
 
 	fs.write = fs_write_func;
 	fs.read = fs_read_func;
 	fs.seek = fs_seek_func;
 
+<<<<<<< HEAD
 //CREATE FILESYSTEM
 	if (strcmp(argv[2], "createfs") == 0) {
 		if (argc < 4) {
@@ -305,45 +284,27 @@ else if (strcmp(argv[2], "test") == 0) {
 		       "\tlist:     ./yffs-tool fsname.img list\n"  
 			   "\ttest:	  ./yffs-tool fsname.img test\n"
 			   "\twear:	  ./yffs-tool fsname.img wear\n\n");	
+=======
+
+//REMOVE ITEM FROM FILESYSTEM	
+	int f;
+	if (argc < 3) {
+		printf("usage: remove:  ./yffs-tool fsname.img test.txt  \n");
+		return 0;
 	}
+	if (mount_image(&fs, argv[1]) == -1) {
+		return 2;
+>>>>>>> origin/Brian
+	}
+
+	for(f = 2; f < argc; ++f) {
+		yffs_unlink(&fs, argv[f]);
+	}
+
 	
-	return 0;
-}
+	yffs_umount(&fs);
+} 
 
 
 
 
-//EMU
-static ssize_t emu_write_func(const void *ptr, size_t size) {
-	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
-	for(size_t i = 0; i < size; ++i)
-		++emu_device_stat[emu_device_pos + i];
-	memcpy(emu_device + emu_device_pos, ptr, size);
-	emu_device_pos += size;
-	return size;
-}
-
-static ssize_t emu_read_func(void *ptr, size_t size) {
-	assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
-	memcpy(ptr, emu_device + emu_device_pos, size);
-	emu_device_pos += size;
-	return size;
-}
-
-static off_t emu_seek_func(off_t offset, int whence) {
-	switch(whence) {
-	case SEEK_SET:
-		emu_device_pos = offset;
-		break;
-	case SEEK_CUR:
-		emu_device_pos += offset;
-		break;
-	case SEEK_END:
-		emu_device_pos = EMU_DEVICE_SIZE + offset;
-		break;
-	default:
-		assert(0);
-	}
-	assert(emu_device_pos <= EMU_DEVICE_SIZE);
-	return emu_device_pos;
-}
