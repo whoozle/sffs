@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
-			printf("%s = %zu\n", fname, buf.st_size);
+			//printf("%s = %zu\n", fname, buf.st_size);
 			src = malloc(buf.st_size);
 			r = yffs_read(&fs, fname, src, buf.st_size);
 			fwrite(src, 1, r, tmp);
@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 		//buffer
 		void *src_data = 0;
 			
-		printf("reading source %s...\n", argv[f]);
+		//printf("reading source %s...\n", argv[f]);
 			
 		//set src_fd to arv[f] 
 	//	if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 			
 		//no longer need arv[f]
 		close(src_fd);
-		printf("writing file %s\n", argv[f]);
+		//printf("writing file %s\n", argv[f]);
 			
 		//writes the file
 		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
 			free(src_data);
 			close(src_fd);
 		
-		printf("unmounting...\n");
+		//printf("unmounting...\n");
 		yffs_umount(&fs);
 		remove("temp.txt");
 		

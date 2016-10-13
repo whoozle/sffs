@@ -203,7 +203,7 @@ static int yffs_compact(struct yffs *fs) {
 	size_t i, n = fs->free.size / sizeof(struct yffs_block);
 	if (n < 2)
 		return 0;
-	LOG_DEBUG(("yffs: compacting free space..."));
+	//LOG_DEBUG(("yffs: compacting free space..."));
 	--n;
 	for(i = 0; i < n; ) {
 		size_t j = i + 1;
@@ -236,7 +236,7 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 		struct yffs_entry *file = files + i;
 		if (strcmp(file->name, files[j].name) == 0) {
 			file->block.mtime = timestamp;
-			LOG_INFO(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
+			//LOG_INFO(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
 			if (yffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, &file->block) == -1)
@@ -255,7 +255,7 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 static int yffs_unlink_at(struct yffs *fs, size_t pos) {
 	struct yffs_entry *file = ((struct yffs_entry *)fs->files.ptr) + pos;
 	struct yffs_block *free_block;
-	LOG_DEBUG(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
+	//LOG_DEBUG(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
 	file->block.mtime = (uint32_t)time(0);
 	if (yffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 		return -1;
@@ -342,7 +342,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 		pos = -pos - 1;
 	} else {
 		remove_me = pos + 1;
-		LOG_DEBUG(("yffs: old file in position %ld", remove_me));
+		//LOG_DEBUG(("yffs: old file in position %ld", remove_me));
 	}
 	file = (struct yffs_entry *)yffs_vector_insert(&fs->files, pos, sizeof(struct yffs_entry));
 	if (!file) {
@@ -374,7 +374,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 		full_size += padding;
 		yffs_vector_remove(&fs->free, best_free - (struct yffs_block *)fs->free.ptr, sizeof(struct yffs_block));
 	}
-	LOG_DEBUG(("yffs: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
+	//LOG_DEBUG(("yffs: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
 	file->block.begin = offset;
 	file->block.end = offset + full_size;
 	file->block.mtime = (uint32_t)time(0);
@@ -418,7 +418,7 @@ ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size) {
 		size = file->size;
 	
 	offset = file->block.begin + yffs_HEADER_SIZE + strlen(fname);
-	LOG_DEBUG(("yffs: reading from offset: %lu, size: %zu", (unsigned long)offset, size));
+	//LOG_DEBUG(("yffs: reading from offset: %lu, size: %zu", (unsigned long)offset, size));
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
 		LOG_ERROR(("yffs: seek(%ld, SEEK_SET) failed", offset));
 		return -1;
@@ -455,7 +455,7 @@ int yffs_mount(struct yffs *fs) {
 		return -1;
 	}
 
-	LOG_DEBUG(("yffs: device size: %zu bytes", size));
+	//LOG_DEBUG(("yffs: device size: %zu bytes", size));
 	fs->device_size = size;
 	
 	size = fs->seek(0, SEEK_SET);
@@ -525,7 +525,7 @@ int yffs_mount(struct yffs *fs) {
 			}
 			file->size = block_size - filename_len - padding;
 			file->name[filename_len] = 0;
-			LOG_DEBUG(("yffs: read file %s -> %zu", file->name, file->size));
+			//LOG_DEBUG(("yffs: read file %s -> %zu", file->name, file->size));
 			file->block = block;
 		} else {
 			struct yffs_block *free;
@@ -534,7 +534,7 @@ int yffs_mount(struct yffs *fs) {
 				goto error;
 			free = (struct yffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
-			LOG_DEBUG(("yffs: free space %zu->%zu", block.begin, block.end));
+			//LOG_DEBUG(("yffs: free space %zu->%zu", block.begin, block.end));
 			if (free->end > fs->device_size)  {
 				LOG_ERROR(("yffs: free spaces crosses device bound!"));
 				free->end = fs->device_size;
@@ -566,7 +566,7 @@ int yffs_mount(struct yffs *fs) {
 	if (yffs_compact(fs) == -1)
 		goto error;
 	
-	LOG_DEBUG(("yffs: mounted!"));
+	//LOG_DEBUG(("yffs: mounted!"));
 	return 0;
 	
 error:
