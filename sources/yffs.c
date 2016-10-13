@@ -19,7 +19,7 @@ static int yffs_block_compare(const void *a, const void *b) {
 static int yffs_vector_resize(struct yffs_vector *vec, size_t new_size) {
 	uint8_t *p = (uint8_t *)realloc(vec->ptr, new_size);
 	if (!p && new_size) {
-		LOG_ERROR(("yffs: realloc(%p, %zu) failed", vec->ptr, new_size));
+		//LOG_ERROR(("yffs: realloc(%p, %zu) failed", vec->ptr, new_size));
 		return -1;
 	}
 	vec->ptr = p;
@@ -72,7 +72,7 @@ const char* yffs_filename(struct yffs *fs, size_t index) {
 static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
 	size_t size = block->end - block->begin;
 	if (size <= yffs_HEADER_SIZE) {
-		LOG_ERROR(("yffs: avoid writing block <= 16b."));
+		//LOG_ERROR(("yffs: avoid writing block <= 16b."));
 		return -1;
 	}
 	char header[yffs_HEADER_SIZE] = {
@@ -82,7 +82,7 @@ static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
 	};
 
 	if (fs->seek(block->begin, SEEK_SET) == (off_t)-1) {
-		LOG_ERROR(("yffs: seek(%zu, SEEK_SET) failed", block->begin));
+		//LOG_ERROR(("yffs: seek(%zu, SEEK_SET) failed", block->begin));
 		return -1;
 	}
 	
@@ -93,12 +93,12 @@ static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
 
 static int yffs_write_at(struct yffs *fs, off_t offset, const void *data, size_t size) {
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
-		LOG_ERROR(("yffs: seek(%zu, SEEK_SET) failed", offset));
+		//LOG_ERROR(("yffs: seek(%zu, SEEK_SET) failed", offset));
 		return -1;
 	}
 
 	if (fs->write(data, size) != size) {
-		LOG_ERROR(("yffs: write(%p, %zu) failed", data, size));
+		//LOG_ERROR(("yffs: write(%p, %zu) failed", data, size));
 		return -1;
 	}
 
@@ -111,17 +111,17 @@ static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_
 	
 	uint32_t size = (uint32_t)(block->end - block->begin - yffs_HEADER_SIZE);
 	if (block->begin + size > fs->device_size) {
-		LOG_ERROR(("yffs: cancelling yffs_write_metadata(0x%zx, %02x, %u), do not corrupt filesystem!", block->begin, flags, size));
+		//LOG_ERROR(("yffs: cancelling yffs_write_metadata(0x%zx, %02x, %u), do not corrupt filesystem!", block->begin, flags, size));
 		return -1;
 	}
 	
 	if (fs->seek(block->begin, SEEK_SET) == (off_t)-1) {
-		LOG_ERROR(("yffs: seek(%zu, SEEK_SET) failed", block->begin));
+		//LOG_ERROR(("yffs: seek(%zu, SEEK_SET) failed", block->begin));
 		return -1;
 	}
 
 	if (fs->read(header, sizeof(header)) != sizeof(header)) {
-		LOG_ERROR(("yffs: read(header) failed"));
+		//LOG_ERROR(("yffs: read(header) failed"));
 		return -1;
 	}
 	
@@ -148,23 +148,23 @@ static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_
 static int yffs_commit_metadata(struct yffs *fs, struct yffs_block *block) {
 	uint8_t flag;
 	if (fs->seek(block->begin, SEEK_SET) == (off_t)-1) {
-		LOG_ERROR(("yffs: seek(%zu, SEEK_SET) failed", block->begin));
+		//LOG_ERROR(("yffs: seek(%zu, SEEK_SET) failed", block->begin));
 		return -1;
 	}
 
 	if (fs->read(&flag, 1) != 1) {
-		LOG_ERROR(("yffs: reading flag failed"));
+		//LOG_ERROR(("yffs: reading flag failed"));
 		return -1;
 	}
 
 	flag ^= 0x80;
 	if (fs->seek(-1, SEEK_CUR) == (off_t)-1) {
-		LOG_ERROR(("yffs: seek(-1, SEEK_CUR) failed"));
+		//LOG_ERROR(("yffs: seek(-1, SEEK_CUR) failed"));
 		return -1;
 	}
 	
 	if (fs->write(&flag, 1) != 1) {
-		LOG_ERROR(("yffs: write(commit flag) failed"));
+		//LOG_ERROR(("yffs: write(commit flag) failed"));
 		return -1;
 	}
 
@@ -203,7 +203,7 @@ static int yffs_compact(struct yffs *fs) {
 	size_t i, n = fs->free.size / sizeof(struct yffs_block);
 	if (n < 2)
 		return 0;
-	//LOG_DEBUG(("yffs: compacting free space..."));
+	//LOG_ERROR(("yffs: compacting free space..."));
 	--n;
 	for(i = 0; i < n; ) {
 		size_t j = i + 1;
@@ -236,7 +236,7 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 		struct yffs_entry *file = files + i;
 		if (strcmp(file->name, files[j].name) == 0) {
 			file->block.mtime = timestamp;
-			//LOG_INFO(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
+			//LOG_ERROR(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
 			if (yffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, &file->block) == -1)
@@ -255,7 +255,7 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 static int yffs_unlink_at(struct yffs *fs, size_t pos) {
 	struct yffs_entry *file = ((struct yffs_entry *)fs->files.ptr) + pos;
 	struct yffs_block *free_block;
-	//LOG_DEBUG(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
+	//LOG_ERROR(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
 	file->block.mtime = (uint32_t)time(0);
 	if (yffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
 		return -1;
@@ -342,20 +342,24 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 		pos = -pos - 1;
 	} else {
 		remove_me = pos + 1;
-		//LOG_DEBUG(("yffs: old file in position %ld", remove_me));
+		//LOG_ERROR(("yffs: old file in position %ld", remove_me));
 	}
 	file = (struct yffs_entry *)yffs_vector_insert(&fs->files, pos, sizeof(struct yffs_entry));
 	if (!file) {
-		LOG_ERROR(("yffs: inserting file struct failed!"));
+		//LOG_ERROR(("yffs: inserting file struct failed!"));
 		return -1;
 	}
-	/*LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct yffs_entry *)fs->files.ptr)[pos].name, ((struct yffs_entry *)fs->files.ptr)[pos + 1].name));*/
+	/*//LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct yffs_entry *)fs->files.ptr)[pos].name, ((struct yffs_entry *)fs->files.ptr)[pos + 1].name));*/
 
 	file->name = strdup(fname);
+	char *user = (char *)malloc(sizeof(char)*10);
+	if(getlogin_r(user, 10) != 0)
+	  printf("problem getting user login...\n");
+	file->owner = user;
 	full_size = yffs_HEADER_SIZE + fname_len + size;
 	best_free = find_best_free(fs, full_size);
 	if (!best_free) {
-		LOG_ERROR(("yffs: no space left on device"));
+		//LOG_ERROR(("yffs: no space left on device"));
 		return -1;
 	}
 
@@ -374,7 +378,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 		full_size += padding;
 		yffs_vector_remove(&fs->free, best_free - (struct yffs_block *)fs->free.ptr, sizeof(struct yffs_block));
 	}
-	//LOG_DEBUG(("yffs: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
+	//LOG_ERROR(("yffs: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
 	file->block.begin = offset;
 	file->block.end = offset + full_size;
 	file->block.mtime = (uint32_t)time(0);
@@ -389,7 +393,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 		return -1;
 	/*write filename*/
 	if (fs->write(fname, fname_len) != fname_len) {
-		LOG_ERROR(("yffs: error writing filename (len: %zu)", fname_len));
+		//LOG_ERROR(("yffs: error writing filename (len: %zu)", fname_len));
 		return -1;
 	}
 	/*commit*/
@@ -414,13 +418,22 @@ ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size) {
 		return -1;
 
 	file = ((struct yffs_entry *)fs->files.ptr) + pos;
+
+	char *user = (char *)malloc(sizeof(char)*10);
+	if(getlogin_r(user, 10) != 0)
+	  printf("problem getting user login...\n");
+	if(strcmp(user, file->owner) != 0) {
+	  printf("user is not the owner of the file...\n");
+	  return -1;
+	}
+
 	if (size > file->size)
 		size = file->size;
 	
 	offset = file->block.begin + yffs_HEADER_SIZE + strlen(fname);
-	//LOG_DEBUG(("yffs: reading from offset: %lu, size: %zu", (unsigned long)offset, size));
+	//LOG_ERROR(("yffs: reading from offset: %lu, size: %zu", (unsigned long)offset, size));
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
-		LOG_ERROR(("yffs: seek(%ld, SEEK_SET) failed", offset));
+		//LOG_ERROR(("yffs: seek(%ld, SEEK_SET) failed", offset));
 		return -1;
 	}
 	return fs->read(data, size);
@@ -451,7 +464,7 @@ int yffs_mount(struct yffs *fs) {
 	off_t offset, size = fs->seek(0, SEEK_END);
 
 	if (size == (off_t)-1) {
-		LOG_ERROR(("yffs: cannot obtain device size: seek(0, SEEK_END) failed"));
+		//LOG_ERROR(("yffs: cannot obtain device size: seek(0, SEEK_END) failed"));
 		return -1;
 	}
 
@@ -460,7 +473,7 @@ int yffs_mount(struct yffs *fs) {
 	
 	size = fs->seek(0, SEEK_SET);
 	if (size == (off_t)-1) {
-		LOG_ERROR(("yffs: seek(0, SEEK_SET) failed"));
+		//LOG_ERROR(("yffs: seek(0, SEEK_SET) failed"));
 		return -1;
 	}
 	
@@ -477,12 +490,12 @@ int yffs_mount(struct yffs *fs) {
 
 		block.begin = offset;
 		if (block.begin >= fs->device_size) {
-			LOG_ERROR(("yffs: block crosses device's bounds"));
+			//LOG_ERROR(("yffs: block crosses device's bounds"));
 			goto error;
 		}
 		
 		if (fs->read(header, sizeof(header)) != sizeof(header)) {
-			LOG_ERROR(("yffs: failed reading block header"));
+			//LOG_ERROR(("yffs: failed reading block header"));
 			goto error;
 		}
 		
@@ -491,14 +504,14 @@ int yffs_mount(struct yffs *fs) {
 
 		block_size = le32toh(*(uint32_t *)(header + header_off + 1));
 		if (block_size == 0) {
-			LOG_ERROR(("yffs: block size 0 is invalid"));
+			//LOG_ERROR(("yffs: block size 0 is invalid"));
 			goto error;
 		}
 		block.end = block.begin + yffs_HEADER_SIZE + block_size;
 		block.mtime = (time_t)*(uint32_t *)&header[10];
 		
 		if (block.end == (off_t)-1) {
-			LOG_ERROR(("yffs: out of bounds"));
+			//LOG_ERROR(("yffs: out of bounds"));
 			goto error;
 		}
 		
@@ -516,16 +529,16 @@ int yffs_mount(struct yffs *fs) {
 			file = (struct yffs_entry *)((char *)fs->files.ptr + file_offset);
 			file->name = malloc(filename_len + 1);
 			if (!file->name) {
-				LOG_ERROR(("yffs: filename allocation failed(%u)", (unsigned)filename_len));
+				//LOG_ERROR(("yffs: filename allocation failed(%u)", (unsigned)filename_len));
 				goto error;
 			}
 			if (fs->read(file->name, filename_len) != filename_len) {
-				LOG_ERROR(("yffs: read(%u) failed", (unsigned)filename_len));
+				//LOG_ERROR(("yffs: read(%u) failed", (unsigned)filename_len));
 				goto error;
 			}
 			file->size = block_size - filename_len - padding;
 			file->name[filename_len] = 0;
-			//LOG_DEBUG(("yffs: read file %s -> %zu", file->name, file->size));
+			//LOG_ERROR(("yffs: read file %s -> %zu", file->name, file->size));
 			file->block = block;
 		} else {
 			struct yffs_block *free;
@@ -534,24 +547,24 @@ int yffs_mount(struct yffs *fs) {
 				goto error;
 			free = (struct yffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
-			//LOG_DEBUG(("yffs: free space %zu->%zu", block.begin, block.end));
+			//LOG_ERROR(("yffs: free space %zu->%zu", block.begin, block.end));
 			if (free->end > fs->device_size)  {
-				LOG_ERROR(("yffs: free spaces crosses device bound!"));
+				//LOG_ERROR(("yffs: free spaces crosses device bound!"));
 				free->end = fs->device_size;
 				goto error;
 			}
 		}
 		if (fs->seek(block.end, SEEK_SET) == (off_t)-1) {
-			LOG_ERROR(("yffs: block end %zu is out of bounds", block.end));
+			//LOG_ERROR(("yffs: block end %zu is out of bounds", block.end));
 			goto error;
 		}
 	}
 	if (offset > fs->device_size) {
-		LOG_ERROR(("yffs: last block crosses device bounds"));
+		//LOG_ERROR(("yffs: last block crosses device bounds"));
 		goto error;
 	}
 	if (fs->files.size == 0 && fs->free.size == 0) {
-		LOG_ERROR(("yffs: corrupted file system: no free blocks or files."));
+		//LOG_ERROR(("yffs: corrupted file system: no free blocks or files."));
 		return -1; //no need to cleanup
 	}
 	
@@ -566,7 +579,7 @@ int yffs_mount(struct yffs *fs) {
 	if (yffs_compact(fs) == -1)
 		goto error;
 	
-	//LOG_DEBUG(("yffs: mounted!"));
+	//LOG_ERROR(("yffs: mounted!"));
 	return 0;
 	
 error:
