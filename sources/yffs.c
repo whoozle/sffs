@@ -427,13 +427,13 @@ ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size) {
 
 	file = ((struct yffs_entry *)fs->files.ptr) + pos;
 
-	char *user = (char *)malloc(sizeof(char)*10);
+	/*char *user = (char *)malloc(sizeof(char)*10);
 	if(getlogin_r(user, 10) != 0)
 	  printf("problem getting user login...\n");
 	if(strcmp(user, file->owner) != 0) {
 	  printf("user is not the owner of the file...\n");
 	  return -1;
-	}
+	  }*/
 
 	if (size > file->size)
 		size = file->size;
