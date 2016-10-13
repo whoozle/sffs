@@ -48,10 +48,12 @@ struct yffs_block {
 };
 
 struct yffs_entry {
-	char *name;
-	size_t size;
-	uint8_t padding;
-	struct yffs_block block;
+  char *name;
+  size_t size;
+  char *owner;
+  unsigned int permBits;
+  uint8_t padding;
+  struct yffs_block block;
 };
 
 /*

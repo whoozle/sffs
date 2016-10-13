@@ -53,22 +53,25 @@ int main(int argc, char **argv) {
   fs.write = fs_write_func;
   fs.read = fs_read_func;
   fs.seek = fs_seek_func;
-
-  //WRITE TO FILESYSTEM
-  int f;
-		
+  
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
 
   int src_fd = -1;
   off_t src_size = 0;
   void *src_data = 0;
-			
-  printf("reading source %s...\n", argv[2]);
-  if ((src_fd = open(argv[2], O_RDONLY)) == -1) {
-    perror("open");
-    //continue;
+
+  //printf("reading source %s...\n", argv[2]);
+  src_fd = open(argv[2], O_RDONLY);
+  if (src_fd == -1) {
+    //printf("file doesnt exist, creating it...\n");
+    if((src_fd = open(argv[2], O_CREAT|O_WRONLY|O_TRUNC)) == -1)
+      perror("problem creating file\n");
+    close(src_fd);
+    if ((src_fd = open(argv[2], O_RDONLY)) == -1)
+      perror("issue opening file...\n");
   }
+    
   src_size = lseek(src_fd, 0, SEEK_END);
   if (src_size == (off_t) -1) {
     perror("lseek");
@@ -86,9 +89,9 @@ int main(int argc, char **argv) {
     goto next;
   }
   close(src_fd);
-  printf("writing file %s\n", argv[f]);
+  //printf("writing file %s\n", argv[2]);
 			
-  if (yffs_write(&fs, argv[f], src_data, src_size) == -1)
+  if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
     goto next;
 #if 0
   memset(src_data, '@', src_size);
@@ -98,10 +101,11 @@ int main(int argc, char **argv) {
  next:
   free(src_data);
   close(src_fd);
+  remove(argv[2]);
 		
-  printf("unmounting...\n");
+  //printf("unmounting...\n");
   yffs_umount(&fs);
-		
+
   close(fd);
 	
   return 0;
