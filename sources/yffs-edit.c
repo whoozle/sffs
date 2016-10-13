@@ -90,8 +90,12 @@ int main(int argc, char **argv) {
 		char byte;
 		tmp = fopen("temp.txt", "ab");
 
-		if (argc == 4) {
+		if (argc != 3) {
 			f = 3; 
+			if (access(argv[f], F_OK) == -1) {
+				printf("File not found\n");
+				exit(1);
+			}
 			struct stat buf;
 			const char *fname = argv[2];
 			void *src;
@@ -103,12 +107,22 @@ int main(int argc, char **argv) {
 			fwrite(src, 1, r, tmp);
 			free(src);
 		}
-		add = fopen(argv[f], "rb");
+		
+		if (argc > 4) {
+			int i; 
+			for (i = 3; i < argc; i++) {
+			}
 
-
-		while (!feof(add)) {
-			fread(&byte, sizeof(char), 1, add);
-			fwrite(&byte, sizeof(char), 1, tmp);
+		} else {
+			if (access(argv[f], F_OK) == -1) {
+				printf("File not found\n");
+				exit(1);
+			}
+			add = fopen(argv[f], "rb");
+			while (!feof(add)) {
+				fread(&byte, sizeof(char), 1, add);
+				fwrite(&byte, sizeof(char), 1, tmp);
+			}
 		}
 		fclose(tmp);
 		fclose(add);
