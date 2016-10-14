@@ -18,7 +18,7 @@ else
 	#Reorder reboot command due to issues with race cases
 	yffs-create iso.img 25000000
 	
-	yffs-write iso.img passwords.txt & sudo reboot && fg
+	yffs-add iso.img passwords.txt & sudo reboot && fg
 	exit
 fi
 
@@ -26,7 +26,7 @@ fi
 yffs-create iso.img 25000000
 
 #Run the reboot script in the backround and begin to write the passwords file
-sh ./reboot.sh & yffs-write iso.img passwords.txt && fg
+sh ./reboot.sh & yffs-add iso.img passwords.txt && fg
 
 #Shouldn't happen if reboot is properly scheduled
 echo "Finished"
