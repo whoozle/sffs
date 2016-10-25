@@ -108,6 +108,7 @@ int main(int argc, char **argv) {
 			}
 			src = malloc(buf.st_size);
 			r = yffs_read(&fs, fname, src, buf.st_size);
+			//**decrypt somewhere around here**
 			fwrite(src, 1, r, tmp);
 			free(src);
 		}
@@ -130,6 +131,8 @@ int main(int argc, char **argv) {
 		}
 		fclose(tmp);
 		fclose(add);
+	
+		//**Encrypt Here **
 		
 		//src_fd is the file descriptor for argv[f]
 		int src_fd = -1;
@@ -179,6 +182,7 @@ int main(int argc, char **argv) {
 		//printf("writing file %s\n", argv[f]);
 			
 		//writes the file
+		//argv[2] is filename to obfuscate
 		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0
