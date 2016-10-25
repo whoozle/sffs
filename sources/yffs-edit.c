@@ -182,6 +182,7 @@ int main(int argc, char **argv) {
 		//printf("writing file %s\n", argv[f]);
 			
 		//writes the file
+		//argv[2] is filename to obfuscate
 		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0
