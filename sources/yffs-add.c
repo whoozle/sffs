@@ -106,7 +106,9 @@ int main(int argc, char **argv) {
   }
   close(src_fd);
   printf("Writing file %s\n", argv[2]);
-			
+	
+  //**encrypt src_data**
+	
   if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
     goto next;
 #if 0
