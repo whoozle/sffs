@@ -51,6 +51,7 @@ struct yffs_entry {
   char *name;
   size_t size;
   char *owner;
+  char *dir; 
   unsigned int permBits;
   uint8_t padding;
   struct yffs_block block;
