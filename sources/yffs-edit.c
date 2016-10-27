@@ -58,12 +58,6 @@ static int mount_image(struct yffs *fs, const char *fname) {
 
 */
 int main(int argc, char **argv) {
-	/*
-	TO DO:
-		Redo arguments to accept a flag (-a, -r) 
-		Usage: ./yffs-write filesystem original new
-		Rewrite code to append or rewrite file
-	*/
 	struct yffs fs;
 	pthread_mutex_init(&mutex, NULL);
 
@@ -131,8 +125,6 @@ int main(int argc, char **argv) {
 		}
 		fclose(tmp);
 		fclose(add);
-	
-		//**Encrypt Here **
 		
 		//src_fd is the file descriptor for argv[f]
 		int src_fd = -1;
@@ -146,7 +138,6 @@ int main(int argc, char **argv) {
 		//printf("reading source %s...\n", argv[f]);
 			
 		//set src_fd to arv[f] 
-	//	if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 		if ((src_fd = open("temp.txt", O_RDONLY)) == -1) {
 			perror("open");
 		}
@@ -185,6 +176,7 @@ int main(int argc, char **argv) {
 		//argv[2] is filename to obfuscate
 
         //test
+	//encrypt(argv[2], x)  - example 
         char * test = argv[2];
         int tt = 0; 
         while (test[tt]) {
