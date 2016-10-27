@@ -77,6 +77,9 @@ int main(int argc, char **argv) {
 	}
 
 	for(f = 2; f < argc; ++f) {
+		/* argv[f] is filename to encrypt
+		encrypt(argv[f], n) where n is encryption method
+		*/
 		yffs_unlink(&fs, argv[f]);
 		printf("Removed \'%s\'\n", argv[f]);
 	}
