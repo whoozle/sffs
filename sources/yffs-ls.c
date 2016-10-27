@@ -74,6 +74,10 @@ int main(int argc, char **argv) {
     return 2;
 
   for(i = 0; (name = yffs_filename(&fs, i)) != 0; ++i) {
+	  /*
+	  name needs to be actually decrypted
+	  decrypt(name, n) where n is decrytpion method
+	  */
     printf("%s\n", name);
   }
 		
