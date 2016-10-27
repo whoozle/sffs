@@ -83,7 +83,11 @@ int main(int argc, char **argv) {
     src = malloc(buf.st_size);
     if (!src)
       return 1;
-			
+    /*fname is filename that needs to be "decrypted"
+    in reality if you encrypt fname the same way it'll work 
+    encrypt(fname, n) where n is encryption mode
+    if you choose incorrect n the file will not be found 
+    */
     r = yffs_read(&fs, fname, src, buf.st_size);
     if (r < 0)
       return 1;
