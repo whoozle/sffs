@@ -3,6 +3,7 @@ CFLAGS= -DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x -w
 all: 	yffs-ls yffs-cat yffs-create yffs-rm yffs-edit yffs-add oclean
 
 yffs-ls: sources/yffs.o sources/yffs-ls.o
+	@mkdir -p bin
 	@$(CC) -o bin/yffs-ls $^
 
 yffs-cat: sources/yffs.o sources/yffs-cat.o

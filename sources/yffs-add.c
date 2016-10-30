@@ -94,9 +94,9 @@ int main(int argc, char **argv) {
   }
   close(src_fd);
   
-  if( argc == 3 ){
+  if( argc == 4 ){
 	  	printf("Writing file %s to folder %s\n", filename, argv[3]);   
-  } else { // argc == 4 
+  } else { // argc == 3 
 	printf("Writing file %s\n", filename);   
   }  
   //**encrypt src_data**
