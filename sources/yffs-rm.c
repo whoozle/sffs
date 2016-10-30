@@ -80,8 +80,9 @@ int main(int argc, char **argv) {
 		/* argv[f] is filename to encrypt
 		encrypt(argv[f], n) where n is encryption method
 		*/
-		yffs_unlink(&fs, argv[f]);
 		printf("Removed \'%s\'\n", argv[f]);
+        encrypt(argv[f], 0);
+		yffs_unlink(&fs, argv[f]);
 	}
 
 	
