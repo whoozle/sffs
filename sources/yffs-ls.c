@@ -67,7 +67,8 @@ int main(int argc, char **argv) {
   fs.seek = fs_seek_func;
 
   //LIST OBJECTS IN FILESYSTEM
-  const char *name;
+  //const char *name;
+  char * name;
   size_t i, total, max;
 
   if (mount_image(&fs, argv[1]) == -1)
@@ -78,6 +79,7 @@ int main(int argc, char **argv) {
 	  name needs to be actually decrypted
 	  decrypt(name, n) where n is decrytpion method
 	  */
+      decrypt(name, 0);
     printf("%s\n", name);
   }
 		

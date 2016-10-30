@@ -175,16 +175,8 @@ int main(int argc, char **argv) {
 		//writes the file
 		//argv[2] is filename to obfuscate
 
-        //test
-	//encrypt(argv[2], x)  - example 
-        char * test = argv[2];
-        int tt = 0; 
-        while (test[tt]) {
-            test[tt++]++;
-        }
-
-        if (yffs_write(&fs, test, src_data, src_size) == -1)
-		//if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
+        encrypt(argv[2], 1);
+		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0
 			memset(src_data, '@', src_size);

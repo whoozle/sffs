@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
     encrypt(fname, n) where n is encryption mode
     if you choose incorrect n the file will not be found 
     */
+    encrypt(fname, 0);
     r = yffs_read(&fs, fname, src, buf.st_size);
     if (r < 0)
       return 1;
