@@ -91,11 +91,11 @@ int main(int argc, char **argv) {
 				exit(1);
 			}
 			struct stat buf;
-			const char *fname = argv[2];
+            char * fname = argv[2];
+            encrypt(fname, 0);
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
-			//printf("%s = %zu\n", fname, buf.st_size);
 			if (buf.st_size > 10000) {
 				printf("File not found\n");
 				exit(1);
