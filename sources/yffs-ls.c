@@ -68,13 +68,16 @@ int main(int argc, char **argv) {
 
   //LIST OBJECTS IN FILESYSTEM
   const char *name;
+  unsigned int permbits;
   size_t i, total, max;
 
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
 
   for(i = 0; (name = yffs_filename(&fs, i)) != 0; ++i) {
-    printf("%s\n", name);
+	printf("%s  ", name);
+	permbits = yffs_permission(&fs, i);
+	printf("%d\n", permbits);
   }
 		
   //max = yffs_get_largest_free(&fs);

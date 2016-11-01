@@ -1,7 +1,7 @@
 #include "yffs.h"
 #define yffs_HEADER_SIZE (16)
 
- int yffs_entry_compare(const void *a, const void *b) {
+int yffs_entry_compare(const void *a, const void *b) {
 	struct yffs_entry *ea = (struct yffs_entry *)a;
 	struct yffs_entry *eb = (struct yffs_entry *)b;
 	int d = strcmp(ea->name, eb->name);
@@ -65,6 +65,15 @@ const char* yffs_filename(struct yffs *fs, size_t index) {
 	index *= sizeof(struct yffs_entry);
 	if (index < fs->files.size) {
 		return ((struct yffs_entry *)(fs->files.ptr + index))->name;
+	} else
+		return 0;
+}
+
+//gets the permission bits at 'index'
+const unsigned int yffs_permission(struct yffs *fs, size_t index) {
+	index *= sizeof(struct yffs_entry);
+	if (index < fs->files.size) {
+		return ((struct yffs_entry *)(fs->files.ptr + index))->permBits;
 	} else
 		return 0;
 }
@@ -359,6 +368,8 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	if(getlogin_r(user, 10) != 0)
 	  printf("problem getting user login...\n");
 	file->owner = user;
+	file->permBits = 14; //"rwr-" as default permissions settings
+	printf("default permbits: %d\n", file->permBits);
 	full_size = yffs_HEADER_SIZE + fname_len + size;
 	best_free = find_best_free(fs, full_size);
 	if (!best_free) {
