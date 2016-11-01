@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <time.h>
+#include <pthread.h>
 
 //Allows program to run on macs
 #ifdef __APPLE__

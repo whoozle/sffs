@@ -74,9 +74,10 @@ int main(int argc, char **argv) {
 
   for(f = 2; f < argc; ++f) {
     struct stat buf;
-    const char *fname = argv[f];
+    char *fname = argv[f];
     void *src;
     ssize_t r;
+    encrypt(fname, 0);
     if (yffs_stat(&fs, fname, &buf) == 1)
       continue;
     //printf("%s = %zu\n", fname, buf.st_size);
@@ -88,7 +89,6 @@ int main(int argc, char **argv) {
     encrypt(fname, n) where n is encryption mode
     if you choose incorrect n the file will not be found 
     */
-    encrypt(fname, 0);
     r = yffs_read(&fs, fname, src, buf.st_size);
     if (r < 0)
       return 1;

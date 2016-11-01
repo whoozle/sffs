@@ -86,13 +86,13 @@ int main(int argc, char **argv) {
 
 		if (argc != 3) {
 			f = 3; 
+            encrypt(argv[f], 0);
 			if (access(argv[f], F_OK) == -1) {
 				printf("File not found\n");
 				exit(1);
 			}
 			struct stat buf;
             char * fname = argv[2];
-            encrypt(fname, 0);
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
