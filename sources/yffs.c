@@ -64,10 +64,17 @@ uint8_t *yffs_vector_append(struct yffs_vector *vec, size_t size) {
 }
 
 //gets the filename at 'index'
-const char* yffs_filename(struct yffs *fs, size_t index) {
+const char* yffs_filename(struct yffs *fs, size_t index, char * directory) {
 	index *= sizeof(struct yffs_entry);
 	if (index < fs->files.size) {
-		return ((struct yffs_entry *)(fs->files.ptr + index))->name;
+		if(strcmp(((struct yffs_entry *)(fs->files.ptr + index))->dir, directory) == 0 ){
+			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->name);
+			return ((struct yffs_entry *)(fs->files.ptr + index))->name;
+		}
+		else{
+			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->dir);
+			return ((struct yffs_entry *)(fs->files.ptr + index))->dir;
+		}
 	} else
 		return 0;
 }
@@ -265,9 +272,15 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 	return 0;
 }
 
-static int yffs_unlink_at(struct yffs *fs, size_t pos) {
+static int yffs_unlink_at(struct yffs *fs, size_t pos, int recursive) {
 	struct yffs_entry *file = ((struct yffs_entry *)fs->files.ptr) + pos;
 	struct yffs_block *free_block;
+	
+	//Check if file is a folder
+	if(file->permBits >= 900 && recursive)
+	{
+		LOG_DEBUG(("Error cannot remove folder %s\n", file->name));
+	}
 
 	// LOG_DEBUG(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
 
@@ -290,12 +303,12 @@ static int yffs_unlink_at(struct yffs *fs, size_t pos) {
 	return yffs_compact(fs);
 }
 
-int yffs_unlink(struct yffs *fs, const char *fname) {
+int yffs_unlink(struct yffs *fs, const char *fname, int recursive) {
 	long pos = yffs_find_file(fs, fname);
 	if (pos < 0)
 		return -1;
 
-	return yffs_unlink_at(fs, pos);
+	return yffs_unlink_at(fs, pos, recursive);
 }
 
 static struct yffs_block *find_best_free(struct yffs *fs, size_t full_size) {
@@ -419,7 +432,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 
 	if (remove_me >= 0) {
 		/*removing old copy*/
-		yffs_unlink_at(fs, remove_me);
+		yffs_unlink_at(fs, remove_me, 0);
 	}
 	return size;
 }

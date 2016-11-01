@@ -67,11 +67,18 @@ int main(int argc, char **argv) {
 
 
 //REMOVE ITEM FROM FILESYSTEM	
-	int f;
+	int f, recursive = 0;
 	if (argc < 3) {
 		printf("usage: remove:  ./yffs-tool fsname.img test.txt  \n");
 		return 0;
 	}
+
+	for(int i = 0; i < argc; i++)
+	{
+		if(argv[i] == "-r")
+			recursive = 1;
+	}
+
 	if (mount_image(&fs, argv[1]) == -1) {
 		return 2;
 	}
@@ -81,8 +88,8 @@ int main(int argc, char **argv) {
 		encrypt(argv[f], n) where n is encryption method
 		*/
 		printf("Removed \'%s\'\n", argv[f]);
-        encrypt(argv[f], 0);
-		yffs_unlink(&fs, argv[f]);
+		encrypt(argv[f], 0);
+		yffs_unlink(&fs, argv[f], recursive);
 	}
 
 	
