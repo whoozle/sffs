@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <time.h>
+#include <pthread.h>
 
 //Allows program to run on macs
 #ifdef __APPLE__
@@ -86,6 +87,8 @@ int yffs_stat(struct yffs *fs, const char *fname, struct stat *buf);
 const char* yffs_filename(struct yffs *fs, size_t index);
 size_t yffs_get_largest_free(struct yffs *fs);
 size_t yffs_get_total_free(struct yffs *fs);
+void encrypt(char * fname, int mode);
+void decrypt(char * fname, int mode);
 
 #ifdef __cplusplus
 }
