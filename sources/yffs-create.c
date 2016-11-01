@@ -71,7 +71,6 @@ int main(int argc, char **argv) {
 	fs.write = fs_write_func; //!! when yffs calls 'write' it is actually calling fs_write which is defined above.
 	fs.read = fs_read_func;
 	fs.seek = fs_seek_func;
-	fs.device_name = strdup(argv[1]); 
 	fs.device_size = atoi(argv[2]);
 	
 	if (fs.device_size < 32) {

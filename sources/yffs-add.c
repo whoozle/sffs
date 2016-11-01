@@ -1,30 +1,10 @@
 /*Team 22*/
 
 #include "yffs.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
 
 
-//Used during 'wear' test
-#define EMU_DEVICE_SIZE (0x10000)
 static int fd;
-static uint8_t emu_device[EMU_DEVICE_SIZE];
-static unsigned emu_device_stat[EMU_DEVICE_SIZE];
-static unsigned emu_device_pos;
-static ssize_t emu_write_func(const void *ptr, size_t size); 
-static ssize_t emu_read_func(void *ptr, size_t size); 
-static off_t emu_seek_func(off_t offset, int whence); 
-
-
 static pthread_mutex_t mutex;
-
-
-
 static ssize_t fs_write_func(const void *ptr, size_t size) {
 	pthread_mutex_lock(&mutex);
 	int wr = write(fd, ptr, size);
@@ -61,30 +41,29 @@ static int mount_image(struct yffs *fs, const char *fname) {
 
 int main(int argc, char **argv) {
   struct yffs fs;
-  if (argc < 3) {
-    printf("Usage: yffs-add fs.img filename\n");
+  if (argc < 3  || argc > 4) {
+    printf("Usage: yffs-add fs.img filename folder\n");
     return 0;
   }
-
+  
   fs.write = fs_write_func;
   fs.read = fs_read_func;
   fs.seek = fs_seek_func;
-  
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
-
+	
   int src_fd = -1;
   off_t src_size = 0;
   void *src_data = 0;
-
-  //printf("reading source %s...\n", argv[2]);
-  src_fd = open(argv[2], O_RDONLY);
+  char * filename = strdup(argv[2]);
+  //printf("reading source %s...\n", filename);
+  src_fd = open(filename, O_RDONLY);
   if (src_fd == -1) {
     //printf("file doesnt exist, creating it...\n");
-    if((src_fd = open(argv[2], O_CREAT|O_WRONLY|O_TRUNC)) == -1)
+    if((src_fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC)) == -1)
       perror("problem creating file\n");
     close(src_fd);
-    if ((src_fd = open(argv[2], O_RDONLY)) == -1)
+    if ((src_fd = open(filename, O_RDONLY)) == -1)
       perror("issue opening file...\n");
   }
     
@@ -105,13 +84,15 @@ int main(int argc, char **argv) {
     goto next;
   }
   close(src_fd);
-  printf("Writing file %s\n", argv[2]);
-	
-  //argv[2] is filename 
-  //encrypt(argv[2], n) where n is encryption mode 
+  
+  if( argc == 4 ){
+	  	printf("Writing file %s to folder %s\n", filename, argv[3]);   
+  } else { // argc == 3 
+	printf("Writing file %s\n", filename);   
+  }  
+  //**encrypt src_data**
   encrypt(argv[2], 0);
-	
-  if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
+  if (yffs_write(&fs, filename, src_data, src_size) == -1)
     goto next;
 #if 0
   memset(src_data, '@', src_size);
@@ -121,7 +102,7 @@ int main(int argc, char **argv) {
  next:
   free(src_data);
   close(src_fd);
-  remove(argv[2]);
+  remove(filename);
 		
   //printf("unmounting...\n");
   yffs_umount(&fs);
@@ -132,39 +113,3 @@ int main(int argc, char **argv) {
 }
 
 
-
-
-//EMU
-static ssize_t emu_write_func(const void *ptr, size_t size) {
-  assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
-  for(size_t i = 0; i < size; ++i)
-    ++emu_device_stat[emu_device_pos + i];
-  memcpy(emu_device + emu_device_pos, ptr, size);
-  emu_device_pos += size;
-  return size;
-}
-
-static ssize_t emu_read_func(void *ptr, size_t size) {
-  assert(emu_device_pos + size <= EMU_DEVICE_SIZE);
-  memcpy(ptr, emu_device + emu_device_pos, size);
-  emu_device_pos += size;
-  return size;
-}
-
-static off_t emu_seek_func(off_t offset, int whence) {
-  switch(whence) {
-  case SEEK_SET:
-    emu_device_pos = offset;
-    break;
-  case SEEK_CUR:
-    emu_device_pos += offset;
-    break;
-  case SEEK_END:
-    emu_device_pos = EMU_DEVICE_SIZE + offset;
-    break;
-  default:
-    assert(0);
-  }
-  assert(emu_device_pos <= EMU_DEVICE_SIZE);
-  return emu_device_pos;
-}

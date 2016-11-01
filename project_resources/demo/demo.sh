@@ -11,7 +11,7 @@ printf "\n"
 
 read -p "[Enter]" var
 if [ ${#var} -eq 0 ]; then
-  yffs-create iso.img 500000
+  ../../bin/yffs-create iso.img 500000
 fi
 
 printf "\nInserting files into image\n"
@@ -22,7 +22,7 @@ if [ ${#var} -eq 0 ]; then
   for i in {0..100}
     do
       echo "File${i}" > "File${i}.txt"
-      yffs-add iso.img "File${i}.txt"
+      ../../bin/yffs-add iso.img "File${i}.txt"
     done  
 fi
 
@@ -30,7 +30,7 @@ printf "\nListing files\n"
 
 read -p "[Enter]" var
 if [ ${#var} -eq 0 ]; then 
-  yffs-ls iso.img
+  ../../bin/yffs-ls iso.img
 fi
 
 printf "\nRemoving odds from image\n"
@@ -40,7 +40,7 @@ if [ ${#var} -eq 0 ]; then
   for i in {0..100}
     do
       if [ $((i%2)) -ne 0 ]; then
-	yffs-rm iso.img "File${i}.txt"
+	../../bin/yffs-rm iso.img "File${i}.txt"
       fi
     done
 fi
@@ -49,7 +49,7 @@ printf "\nListing files\n"
 
 read -p "[Enter]" var
 if [ ${#var} -eq 0 ]; then
-  yffs-ls iso.img
+  ../../bin/yffs-ls iso.img
 fi
 
 printf "\nReading all files divisible by 10\n"
@@ -59,7 +59,7 @@ if [ ${#var} -eq 0 ]; then
   for i in {0..100}
     do
       if [ $((i%10)) -eq 0 ]; then
-        yffs-cat iso.img "File${i}.txt"
+        ../../bin/yffs-cat iso.img "File${i}.txt"
       fi
     done
 fi
@@ -73,9 +73,9 @@ if [ ${#var} -eq 0 ]; then
       #We have to take the even files because we removed the odds 
       if [ $((i%2)) -eq 0 ]; then
         echo "Modified ${i}" > "File${i}.txt"
-        yffs-edit iso.img "File${i}.txt"
+        ../../bin/yffs-edit iso.img "File${i}.txt"
         rm "File${i}.txt"
-        yffs-cat iso.img "File${i}.txt"
+        ../../bin/yffs-cat iso.img "File${i}.txt"
       fi
     done
 fi

@@ -70,7 +70,6 @@ struct yffs_vector {
 struct yffs {
 	size_t device_size; //Total filesystem size
 	struct yffs_vector files, free; // 'files' = allocated vector, 'free' = free vector
- 	char *device_name;	
 	write_func write;
 	read_func read;
 	seek_func seek;
