@@ -1,17 +1,8 @@
 /*Team 22*/
 
 #include "yffs.h"
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
 
 
-//Used during 'wear' test
-#define EMU_DEVICE_SIZE (0x10000)
 static int fd;
 static pthread_mutex_t mutex;
 static ssize_t fs_write_func(const void *ptr, size_t size) {
