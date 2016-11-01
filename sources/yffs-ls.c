@@ -13,7 +13,10 @@
 static int fd;
 static pthread_mutex_t mutex;
 
-
+int compare(const char * a, const char * b)
+{
+  return strcmp(a, b);
+}
 
 static ssize_t fs_write_func(const void *ptr, size_t size) {
 	pthread_mutex_lock(&mutex);
@@ -73,10 +76,27 @@ int main(int argc, char **argv) {
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
 
-  for(i = 0; (name = yffs_filename(&fs, i)) != 0; ++i) {
-    printf("%s\n", name);
+  if (argc > 2)
+  {
+    //Loop through all of the arguments and list out folders
+    for(int i = 2; i < argc; i++)
+    {
+      //List out the contents in each folder
+      for(int j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; j++){
+        printf("%s\t");
+      }
+    }
   }
-		
+  else
+  {
+    //Print out file names
+    for(i = 0; (name = yffs_filename(&fs, i, "")) != 0; ++i) {
+      printf("%s\t", name);
+    }
+  }
+  
+  printf("\n");
+
   //max = yffs_get_largest_free(&fs);
   //total = yffs_get_total_free(&fs);
   //printf("Free blocks, total: %zu, largest: %zu\n", total, max);

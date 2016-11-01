@@ -67,17 +67,24 @@ int main(int argc, char **argv) {
 
 
 //REMOVE ITEM FROM FILESYSTEM	
-	int f;
+	int f, recursive = 0;
 	if (argc < 3) {
 		printf("usage: remove:  ./yffs-tool fsname.img test.txt  \n");
 		return 0;
 	}
+
+	for(int i = 0; i < argc; i++)
+	{
+		if(argv[i] == "-r")
+			recursive = 1;
+	}
+
 	if (mount_image(&fs, argv[1]) == -1) {
 		return 2;
 	}
 
 	for(f = 2; f < argc; ++f) {
-		yffs_unlink(&fs, argv[f]);
+		yffs_unlink(&fs, argv[f], recursive);
 		printf("Removed \'%s\'\n", argv[f]);
 	}
 
