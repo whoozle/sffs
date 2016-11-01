@@ -70,7 +70,8 @@ int main(int argc, char **argv) {
   fs.seek = fs_seek_func;
 
   //LIST OBJECTS IN FILESYSTEM
-  const char *name;
+  //const char *name;
+  char * name;
   size_t i, total, max;
   size_t j;
 
@@ -87,6 +88,7 @@ int main(int argc, char **argv) {
       printf("%s\n", argv[i]);
       //List out the contents in each folder
       for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
+        decrypt(name, 0);
         printf("%s\t", name);
       }
       printf("\n");
@@ -96,6 +98,7 @@ int main(int argc, char **argv) {
   {
     //Print out file names
     for(i = 0; (name = yffs_filename(&fs, i, "")) != 0; ++i) {
+      decrypt(name, 0);
       printf("%s\t", name);
     }
   }
