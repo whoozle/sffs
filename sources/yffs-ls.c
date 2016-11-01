@@ -78,6 +78,12 @@ int main(int argc, char **argv) {
 	printf("%s  ", name);
 	permbits = yffs_permission(&fs, i);
 	printf("%d\n", permbits);
+	/*
+	name needs to be actually decrypted
+	decrypt(name, n) where n is decrytpion method
+	*/
+	decrypt(name, 0);
+	printf("%s\n", name);
   }
 		
   //max = yffs_get_largest_free(&fs);

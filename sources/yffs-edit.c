@@ -58,12 +58,6 @@ static int mount_image(struct yffs *fs, const char *fname) {
 
 */
 int main(int argc, char **argv) {
-	/*
-	TO DO:
-		Redo arguments to accept a flag (-a, -r) 
-		Usage: ./yffs-write filesystem original new
-		Rewrite code to append or rewrite file
-	*/
 	struct yffs fs;
 	pthread_mutex_init(&mutex, NULL);
 
@@ -92,16 +86,16 @@ int main(int argc, char **argv) {
 
 		if (argc != 3) {
 			f = 3; 
+            encrypt(argv[f], 0);
 			if (access(argv[f], F_OK) == -1) {
 				printf("File not found\n");
 				exit(1);
 			}
 			struct stat buf;
-			const char *fname = argv[2];
+            char * fname = argv[2];
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
-			//printf("%s = %zu\n", fname, buf.st_size);
 			if (buf.st_size > 10000) {
 				printf("File not found\n");
 				exit(1);
@@ -131,8 +125,6 @@ int main(int argc, char **argv) {
 		}
 		fclose(tmp);
 		fclose(add);
-	
-		//**Encrypt Here **
 		
 		//src_fd is the file descriptor for argv[f]
 		int src_fd = -1;
@@ -146,7 +138,6 @@ int main(int argc, char **argv) {
 		//printf("reading source %s...\n", argv[f]);
 			
 		//set src_fd to arv[f] 
-	//	if ((src_fd = open(argv[f], O_RDONLY)) == -1) {
 		if ((src_fd = open("temp.txt", O_RDONLY)) == -1) {
 			perror("open");
 		}
@@ -183,6 +174,8 @@ int main(int argc, char **argv) {
 			
 		//writes the file
 		//argv[2] is filename to obfuscate
+
+        encrypt(argv[2], 1);
 		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0
