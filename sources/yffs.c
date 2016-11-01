@@ -64,7 +64,14 @@ uint8_t *yffs_vector_append(struct yffs_vector *vec, size_t size) {
 const char* yffs_filename(struct yffs *fs, size_t index, char * directory) {
 	index *= sizeof(struct yffs_entry);
 	if (index < fs->files.size) {
-		return strcmp(((struct yffs_entry *)(fs->files.ptr + index))->dir, directory) == 0 ? ((struct yffs_entry *)(fs->files.ptr + index))->name : ((struct yffs_entry *)(fs->files.ptr + index))->dir;
+		if(strcmp(((struct yffs_entry *)(fs->files.ptr + index))->dir, directory) == 0 ){
+			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->name);
+			return ((struct yffs_entry *)(fs->files.ptr + index))->name;
+		}
+		else{
+			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->dir);
+			return ((struct yffs_entry *)(fs->files.ptr + index))->dir;
+		}
 	} else
 		return 0;
 }

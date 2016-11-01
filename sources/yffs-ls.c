@@ -72,19 +72,24 @@ int main(int argc, char **argv) {
   //LIST OBJECTS IN FILESYSTEM
   const char *name;
   size_t i, total, max;
+  size_t j;
 
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
 
+  printf("Starting ls\n");
+
   if (argc > 2)
   {
     //Loop through all of the arguments and list out folders
-    for(int i = 2; i < argc; i++)
+    for(i = 2; i < argc; i++)
     {
+      printf("%s\n", argv[i]);
       //List out the contents in each folder
-      for(int j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; j++){
-        printf("%s\t");
+      for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
+        printf("%s\t", name);
       }
+      printf("\n");
     }
   }
   else
