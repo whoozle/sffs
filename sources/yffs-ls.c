@@ -70,8 +70,8 @@ int main(int argc, char **argv) {
   fs.seek = fs_seek_func;
 
   //LIST OBJECTS IN FILESYSTEM
-  //const char *name;
-  char * name;
+  const char *name;
+  unsigned int permbits;
   size_t i, total, max;
   size_t j;
 
@@ -98,12 +98,18 @@ int main(int argc, char **argv) {
   {
     //Print out file names
     for(i = 0; (name = yffs_filename(&fs, i, "")) != 0; ++i) {
+      /*
+      name needs to be actually decrypted
+      decrypt(name, n) where n is decrytpion method
+      */
       decrypt(name, 0);
       printf("%s\t", name);
+      permbits = yffs_permission(&fs, i);
+      printf("%d\n", permbits);
     }
+    printf("\n");
   }
   
-  printf("\n");
 
   //max = yffs_get_largest_free(&fs);
   //total = yffs_get_total_free(&fs);
