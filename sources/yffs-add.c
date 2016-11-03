@@ -79,6 +79,9 @@ int main(int argc, char **argv) {
   }
 	
   lseek(src_fd, 0, SEEK_SET);
+
+  //Check if file is a folder then create a folder in the filesystem
+
   if (read(src_fd, src_data, src_size) != src_size) {
     perror("short read");
     goto next;
@@ -86,12 +89,17 @@ int main(int argc, char **argv) {
   close(src_fd);
   
   if( argc == 4 ){
-	  	printf("Writing file %s to folder %s\n", filename, argv[3]);   
+	  	printf("Writing file %s to folder %s\n", filename, argv[3]);
+      //Check if folder exists
+      //if()
+      //Add file into folder
+
+
   } else { // argc == 3 
 	printf("Writing file %s\n", filename);   
   }  
   //**encrypt src_data**
-  encrypt(argv[2], 0);
+  //encrypt(argv[2], 0);
   if (yffs_write(&fs, filename, src_data, src_size) == -1)
     goto next;
 #if 0

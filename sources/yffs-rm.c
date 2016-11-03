@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 		encrypt(argv[f], n) where n is encryption method
 		*/
 		printf("Removed \'%s\'\n", argv[f]);
-		encrypt(argv[f], 0);
+		//encrypt(argv[f], 0);
 		yffs_unlink(&fs, argv[f], recursive);
 	}
 

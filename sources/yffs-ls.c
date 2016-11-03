@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
       printf("%s\n", argv[i]);
       //List out the contents in each folder
       for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
-        decrypt(name, 0);
+        //decrypt(name, 0);
         printf("%s\t", name);
       }
       printf("\n");
@@ -97,12 +97,12 @@ int main(int argc, char **argv) {
   else
   {
     //Print out file names
-    for(i = 0; (name = yffs_filename(&fs, i, "")) != 0; ++i) {
+    for(i = 0; (name = yffs_filename(&fs, i, "/")) != 0; ++i) {
       /*
       name needs to be actually decrypted
       decrypt(name, n) where n is decrytpion method
       */
-      decrypt(name, 0);
+      //decrypt(name, 0);
       printf("%s\t", name);
       permbits = yffs_permission(&fs, i);
       printf("%d\n", permbits);

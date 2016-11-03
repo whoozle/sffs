@@ -66,13 +66,30 @@ uint8_t *yffs_vector_append(struct yffs_vector *vec, size_t size) {
 //gets the filename at 'index'
 const char* yffs_filename(struct yffs *fs, size_t index, char * directory) {
 	index *= sizeof(struct yffs_entry);
+	
+	//Return files in directory
 	if (index < fs->files.size) {
+		//If this is not a directory
+		if((((struct yffs_entry *)(fs->files.ptr + index))->dir)[0] != '\0'){
+				printf("Dir is null\n");
+				//We are at the root dir
+				printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->name);
+				return ((struct yffs_entry *)(fs->files.ptr + index))->name;
+		}
+		
+		//If this is a dir
 		if(strcmp(((struct yffs_entry *)(fs->files.ptr + index))->dir, directory) == 0 ){
 			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->name);
 			return ((struct yffs_entry *)(fs->files.ptr + index))->name;
 		}
 		else{
-			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->dir);
+			//Or return directories
+			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->name);
+			if((((struct yffs_entry *)(fs->files.ptr + index))->dir)[0] != '\0'){
+				printf("Dir is null\n");
+			}
+			else
+				printf("Dir is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->dir);
 			return ((struct yffs_entry *)(fs->files.ptr + index))->dir;
 		}
 	} else
@@ -357,6 +374,10 @@ size_t yffs_get_total_free(struct yffs *fs) {
 }
 
 ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t size) {
+
+	//Get the file without any slashes
+	int index = strlstchar(fname, '/');
+
 	size_t fname_len = strlen(fname), best_size, full_size, tail_size;
 	struct yffs_entry *file;
 	long remove_me;
@@ -379,7 +400,18 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	}
 	/*//LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct yffs_entry *)fs->files.ptr)[pos].name, ((struct yffs_entry *)fs->files.ptr)[pos + 1].name));*/
 
-	file->name = strdup(fname);
+	//Insert the rest of the directory into dir attribute in yffs_entry
+	char * directory = strdup((char *)substring(fname, 0, index+1));
+	if(index == -1){
+		char * buff = { '/' };
+		file->dir = &buff;
+	}
+	else
+		file->dir = directory;
+	printf("Dir is %s\n", directory);
+	printf("Set to %s\n", file->dir);
+	//Set the name into file
+	file->name = strdup((char *)substring(fname, index+1, strlen(fname) - (index+1)));
 	char *user = (char *)malloc(sizeof(char)*10);
 	if(getlogin_r(user, 10) != 0)
 	  printf("problem getting user login...\n");
@@ -649,4 +681,29 @@ void decrypt(char * fname, int mode) {
         while (fname[i]) {
             fname[i++]--;
         }
+}
+
+char * substring(char *string, int position, int length) 
+{
+   char pointer[length+1];
+
+   memset(&pointer[0], 0, sizeof(pointer));
+   int c;
+ 
+   for (c = 0 ; c < length ; c++)
+   {
+      pointer[c] = *(string+position);      
+      string++;   
+   }
+ 
+   pointer[c] = '\0';
+ 
+   char * ptr = (char *)pointer;
+   return ptr;
+}
+
+size_t strlstchar(const char *str, const char ch)
+{
+    char *chptr = strrchr(str, ch);
+    return (chptr != NULL) ? chptr - str : -1;
 }

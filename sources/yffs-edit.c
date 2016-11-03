@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
 		if (argc != 3) {
 			f = 3; 
-            encrypt(argv[f], 0);
+            //encrypt(argv[f], 0);
 			if (access(argv[f], F_OK) == -1) {
 				printf("File not found\n");
 				exit(1);
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
 		//writes the file
 		//argv[2] is filename to obfuscate
 
-        encrypt(argv[2], 1);
+        //encrypt(argv[2], 1);
 		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0

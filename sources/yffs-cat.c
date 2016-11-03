@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     char *fname = argv[f];
     void *src;
     ssize_t r;
-    encrypt(fname, 0);
+    //encrypt(fname, 0);
     if (yffs_stat(&fs, fname, &buf) == 1)
       continue;
     //printf("%s = %zu\n", fname, buf.st_size);

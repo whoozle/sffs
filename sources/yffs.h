@@ -88,6 +88,8 @@ size_t yffs_get_largest_free(struct yffs *fs);
 size_t yffs_get_total_free(struct yffs *fs);
 void encrypt(char * fname, int mode);
 void decrypt(char * fname, int mode);
+char * substring(char *string, int position, int length);
+size_t strlstchar(const char *str, const char ch);
 
 #ifdef __cplusplus
 }
