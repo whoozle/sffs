@@ -78,18 +78,19 @@ int main(int argc, char **argv) {
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
 
-  printf("Starting ls\n");
+  //Create array and only insert duplicates
 
   if (argc > 2)
   {
     //Loop through all of the arguments and list out folders
     for(i = 2; i < argc; i++)
     {
-      printf("%s\n", argv[i]);
+      //printf("%s\n", argv[i]);
       //List out the contents in each folder
       for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
         //decrypt(name, 0);
-        printf("%s\t", name);
+        if(strcmp(name, "") != 0)
+          printf("%s\t", name);
       }
       printf("\n");
     }
@@ -107,7 +108,6 @@ int main(int argc, char **argv) {
       permbits = yffs_permission(&fs, i);
       printf("%d\n", permbits);
     }
-    printf("\n");
   }
   
 

@@ -69,28 +69,35 @@ const char* yffs_filename(struct yffs *fs, size_t index, char * directory) {
 	
 	//Return files in directory
 	if (index < fs->files.size) {
-		//If this is not a directory
-		if((((struct yffs_entry *)(fs->files.ptr + index))->dir)[0] != '\0'){
-				printf("Dir is null\n");
-				//We are at the root dir
-				printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->name);
-				return ((struct yffs_entry *)(fs->files.ptr + index))->name;
-		}
-		
-		//If this is a dir
-		if(strcmp(((struct yffs_entry *)(fs->files.ptr + index))->dir, directory) == 0 ){
-			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->name);
-			return ((struct yffs_entry *)(fs->files.ptr + index))->name;
+		struct yffs_entry * ent = (struct yffs_entry *)(fs->files.ptr + index);
+		//printf("Ent\nDir->%s\nFile->%s\n", ent->dir, ent->name);
+
+		//If this is in the same directory print out the file
+		if(ent->dir && strcmp(ent->dir, directory) == 0 ){
+			//printf("Name is %s\n", ent->name);
+			return ent->name;
 		}
 		else{
 			//Or return directories
-			printf("Name is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->name);
-			if((((struct yffs_entry *)(fs->files.ptr + index))->dir)[0] != '\0'){
-				printf("Dir is null\n");
+			//printf("Name is %s\n", ent->name);
+			if(ent->dir){
+				//printf("Dir is %s\n", ent->dir);
+				if(strstr(ent->dir, directory) != NULL) {
+					return ent->dir;
+				}
+				else{
+					//printf("Returning null\n");
+					return "";
+				}
 			}
-			else
-				printf("Dir is %s\n", ((struct yffs_entry *)(fs->files.ptr + index))->dir);
-			return ((struct yffs_entry *)(fs->files.ptr + index))->dir;
+			else{
+				//Shouldn't happen
+
+				//printf("Dir is null\n");
+				//char * fname = ent->name;
+				// memmove (fname, fname+1, strlen (fname+1) + 1);
+				return ent->name;
+			}
 		}
 	} else
 		return 0;
@@ -114,7 +121,7 @@ static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
 	char header[yffs_HEADER_SIZE] = {
 		0, 0, 0, 0, 0, /*1:flags(empty) + size, current 1st*/
 		0, 0, 0, 0, 0, /*2:flags + size*/
-		0, 0, 0, 0, 0, 0, /*mtime + padding + fname len */
+		0, 0, 0, 0, 0, 0, /*mtime + padding + dir_len + fname len */
 	};
 
 	if (fs->seek(block->begin, SEEK_SET) == (off_t)-1) {
@@ -141,9 +148,9 @@ static int yffs_write_at(struct yffs *fs, off_t offset, const void *data, size_t
 	return 0;
 }
 
-static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_t flags, uint8_t fname_len, uint8_t padding) {
+static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_t flags, uint8_t fname_len, uint8_t dir_len, uint8_t padding) {
 	uint8_t header[10], header_offset;
-	uint8_t header2[4 + 1 + 1]; /*timestamp + padding + filename len*/
+	uint8_t header2[4 + 1 + 1]; /*timestamp + dir_len + filename len */
 	
 	uint32_t size = (uint32_t)(block->end - block->begin - yffs_HEADER_SIZE);
 	if (block->begin + size > fs->device_size) {
@@ -172,7 +179,7 @@ static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_
 	
 	/* update timestamp */
 	*((uint32_t *)header2) = htole32(block->mtime);
-	header2[4] = padding;
+	header2[4] = dir_len;
 	header2[5] = fname_len;
 
 	if (yffs_write_at(fs, block->begin + 10, header2, 6) == -1)
@@ -247,7 +254,7 @@ static int yffs_compact(struct yffs *fs) {
 		if (free[i].end == free[j].begin) {
 			free[i].end = free[j].end;
 			free[i].mtime = free[i].mtime > free[j].mtime? free[i].mtime: free[j].mtime;
-			if (yffs_write_metadata(fs, free + i, 0, 0, 0) == -1)
+			if (yffs_write_metadata(fs, free + i, 0, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, free + i) == -1)
 				return -1;
@@ -274,7 +281,7 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 		if (strcmp(file->name, files[j].name) == 0) {
 			file->block.mtime = timestamp;
 			//LOG_ERROR(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
-			if (yffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
+			if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, &file->block) == -1)
 				return -1;
@@ -302,7 +309,7 @@ static int yffs_unlink_at(struct yffs *fs, size_t pos, int recursive) {
 	// LOG_DEBUG(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
 
 	file->block.mtime = (uint32_t)time(0);
-	if (yffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
+	if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0) == -1)
 		return -1;
 	if (yffs_commit_metadata(fs, &file->block) == -1)
 		return -1;
@@ -378,7 +385,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	//Get the file without any slashes
 	int index = strlstchar(fname, '/');
 
-	size_t fname_len = strlen(fname), best_size, full_size, tail_size;
+	size_t fname_len, dir_len, best_size, full_size, tail_size;
 	struct yffs_entry *file;
 	long remove_me;
 	struct yffs_block *best_free;
@@ -399,29 +406,44 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 		return -1;
 	}
 	/*//LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct yffs_entry *)fs->files.ptr)[pos].name, ((struct yffs_entry *)fs->files.ptr)[pos + 1].name));*/
-
+	printf("Pre substring\n");
 	//Insert the rest of the directory into dir attribute in yffs_entry
-	char * directory = strdup((char *)substring(fname, 0, index+1));
+	char * directory = (char*)substring(fname, 0, index+1);
 	if(index == -1){
-		char * buff = { '/' };
-		file->dir = &buff;
+		printf("No folder given\n");
+		char * buff = "/";
+		printf("Strlen is %d\n", 1);
+		file->dir = (char *)malloc(1 * sizeof(char));
+		file->dir = buff;
+		dir_len = 1;
 	}
-	else
+	else{
+		file->dir = (char *)malloc(strlen(directory) * sizeof(char));
 		file->dir = directory;
+		dir_len = strlen(directory);
+	}
 	printf("Dir is %s\n", directory);
 	printf("Set to %s\n", file->dir);
+
 	//Set the name into file
-	file->name = strdup((char *)substring(fname, index+1, strlen(fname) - (index+1)));
+	file->name = (char *)malloc((strlen(fname) - (index+1)) *sizeof(char));
+	file->name = (char *)substring(fname, index+1, strlen(fname) - (index+1));
+
+	printf("File is %s\n", file->name);
+
+	fname_len = strlen(file->name);
+
 	char *user = (char *)malloc(sizeof(char)*10);
 	if(getlogin_r(user, 10) != 0)
 	  printf("problem getting user login...\n");
 	file->owner = user;
 	file->permBits = 14; //"rwr-" as default permissions settings
 	printf("default permbits: %d\n", file->permBits);
-	full_size = yffs_HEADER_SIZE + fname_len + size;
+
+	full_size = yffs_HEADER_SIZE + dir_len + fname_len + size;
 	best_free = find_best_free(fs, full_size);
 	if (!best_free) {
-		//LOG_ERROR(("yffs: no space left on device"));
+		LOG_ERROR(("yffs: no space left on device"));
 		return -1;
 	}
 
@@ -448,13 +470,19 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	file->size = size;
 
 	/*writing data*/
-	if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len, data, size) == -1)
+	if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len, data, size) == -1)
 		return -1;
 	/*writing metadata*/
-	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, padding) == -1)
+	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, padding) == -1)
 		return -1;
+	/*write dirname*/
+	if(fs->write(file->dir, dir_len) != dir_len)
+	{
+		//LOG_ERROR(("yffs: error writing directory (len: %zu)", dir_len));
+		return -1;
+	}
 	/*write filename*/
-	if (fs->write(fname, fname_len) != fname_len) {
+	if (fs->write(file->name, fname_len) != fname_len) {
 		//LOG_ERROR(("yffs: error writing filename (len: %zu)", fname_len));
 		return -1;
 	}
@@ -480,6 +508,7 @@ ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size) {
 		return -1;
 
 	file = ((struct yffs_entry *)fs->files.ptr) + pos;
+	int dir_len = strlen(file->dir);
 
 	/*char *user = (char *)malloc(sizeof(char)*10);
 	if(getlogin_r(user, 10) != 0)
@@ -492,7 +521,7 @@ ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size) {
 	if (size > file->size)
 		size = file->size;
 	
-	offset = file->block.begin + yffs_HEADER_SIZE + strlen(fname);
+	offset = file->block.begin + yffs_HEADER_SIZE + strlen(fname) + dir_len;
 	//LOG_ERROR(("yffs: reading from offset: %lu, size: %zu", (unsigned long)offset, size));
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
 		//LOG_ERROR(("yffs: seek(%ld, SEEK_SET) failed", offset));
@@ -581,8 +610,12 @@ int yffs_mount(struct yffs *fs) {
 			struct yffs_entry *file;
 			size_t file_offset = fs->files.size;
 			uint8_t filename_len = header[15], padding = header[14];
+			uint8_t dir_len = header[14];
 
 			if (filename_len == 0 || filename_len == 0xff)
+				break;
+
+			if (dir_len == 0 || dir_len == 0xff)
 				break;
 		
 			if (yffs_vector_resize(&fs->files, file_offset + sizeof(struct yffs_entry)) == -1)
@@ -590,16 +623,30 @@ int yffs_mount(struct yffs *fs) {
 			
 			file = (struct yffs_entry *)((char *)fs->files.ptr + file_offset);
 			file->name = malloc(filename_len + 1);
+			file->dir = malloc(dir_len + 1);
+
+			if(!file->dir)
+			{
+				goto error;
+			}
+
 			if (!file->name) {
 				//LOG_ERROR(("yffs: filename allocation failed(%u)", (unsigned)filename_len));
 				goto error;
 			}
+
+			if (fs->read(file->dir, dir_len) != dir_len) {
+				//LOG_ERROR(("yffs: read(%u) failed", (unsigned)filename_len));
+				goto error;
+			}
+
 			if (fs->read(file->name, filename_len) != filename_len) {
 				//LOG_ERROR(("yffs: read(%u) failed", (unsigned)filename_len));
 				goto error;
 			}
-			file->size = block_size - filename_len - padding;
+			file->size = block_size - filename_len - dir_len; // - padding;
 			file->name[filename_len] = 0;
+			file->dir[dir_len] = 0;
 
 			// LOG_DEBUG(("yffs: read file %s -> %zu", file->name, file->size));
 
@@ -612,7 +659,7 @@ int yffs_mount(struct yffs *fs) {
 			free = (struct yffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
 
-			// LOG_DEBUG(("yffs: free space %zu->%zu", block.begin, block.end));
+			//LOG_DEBUG(("yffs: free space %zu->%zu", block.begin, block.end));
 
 			if (free->end > fs->device_size)  {
 				//LOG_ERROR(("yffs: free spaces crosses device bound!"));
@@ -654,6 +701,7 @@ error:
 	yffs_umount(fs);
 	return -1;
 }
+
 
 
 int yffs_umount(struct yffs *fs) {
@@ -698,8 +746,7 @@ char * substring(char *string, int position, int length)
  
    pointer[c] = '\0';
  
-   char * ptr = (char *)pointer;
-   return ptr;
+   return strdup(pointer);
 }
 
 size_t strlstchar(const char *str, const char ch)

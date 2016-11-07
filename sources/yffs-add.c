@@ -49,14 +49,15 @@ int main(int argc, char **argv) {
   fs.write = fs_write_func;
   fs.read = fs_read_func;
   fs.seek = fs_seek_func;
-  if (mount_image(&fs, argv[1]) == -1)
+  if (mount_image(&fs, argv[1]) == -1){
+    printf("Mount failed\n");
     return 2;
+  }
 	
   int src_fd = -1;
   off_t src_size = 0;
   void *src_data = 0;
   char * filename = strdup(argv[2]);
-  //printf("reading source %s...\n", filename);
   src_fd = open(filename, O_RDONLY);
   if (src_fd == -1) {
     //printf("file doesnt exist, creating it...\n");
@@ -103,6 +104,7 @@ int main(int argc, char **argv) {
   if (yffs_write(&fs, filename, src_data, src_size) == -1)
     goto next;
 #if 0
+  printf("Error\n");
   memset(src_data, '@', src_size);
   yffs_read(&fs, argv[f], src_data, src_size);
   fwrite(src_data, 1, src_size, stdout);
