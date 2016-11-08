@@ -72,9 +72,9 @@ if [ ${#var} -eq 0 ]; then
     do
       #We have to take the even files because we removed the odds 
       if [ $((i%2)) -eq 0 ]; then
-        echo "Modified ${i}" > "File${i}.txt"
-        ../../bin/yffs-edit iso.img "File${i}.txt"
-        rm "File${i}.txt"
+        echo "mod*" > toAppend;
+          ../../bin/yffs-edit iso.img "File${i}.txt" "toAppend"
+        rm "toAppend"
         ../../bin/yffs-cat iso.img "File${i}.txt"
       fi
     done

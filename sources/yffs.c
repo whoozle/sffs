@@ -2,7 +2,7 @@
 #define yffs_HEADER_SIZE (16)
 
 //If you set this to 1 it will remove encryption/decryption, if that is causing other members problems
-static int testing = 0;
+static int testing = 1;
 
 int yffs_entry_compare(const void *a, const void *b) {
 	struct yffs_entry *ea = (struct yffs_entry *)a;
