@@ -410,13 +410,13 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 		return -1;
 	}
 	/*//LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct yffs_entry *)fs->files.ptr)[pos].name, ((struct yffs_entry *)fs->files.ptr)[pos + 1].name));*/
-	printf("Pre substring\n");
+	//printf("Pre substring\n");
 	//Insert the rest of the directory into dir attribute in yffs_entry
 	char * directory = (char*)substring(fname, 0, index+1);
 	if(index == -1){
-		printf("No folder given\n");
+		//printf("No folder given\n");
 		char * buff = "/";
-		printf("Strlen is %d\n", 1);
+		//printf("Strlen is %d\n", 1);
 		file->dir = (char *)malloc(1 * sizeof(char));
 		file->dir = buff;
 		dir_len = 1;
@@ -426,14 +426,14 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 		file->dir = directory;
 		dir_len = strlen(directory);
 	}
-	printf("Dir is %s\n", directory);
-	printf("Set to %s\n", file->dir);
+	//printf("Dir is %s\n", directory);
+	//printf("Set to %s\n", file->dir);
 
 	//Set the name into file
 	file->name = (char *)malloc((strlen(fname) - (index+1)) *sizeof(char));
 	file->name = (char *)substring(fname, index+1, strlen(fname) - (index+1));
 
-	printf("File is %s\n", file->name);
+	//printf("File is %s\n", file->name);
 
 	fname_len = strlen(file->name);
 

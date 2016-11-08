@@ -88,6 +88,16 @@ int main(int argc, char **argv) {
     goto next;
   }
   close(src_fd);
+
+
+  struct stat buf;
+  if (yffs_stat(&fs, filename, &buf) == -1){
+    //Check to see if the file exists
+  }
+  else{
+    LOG_ERROR(("File %s already exists", filename));
+    return 1;
+  }
   
   if( argc == 4 ){
 	  	printf("Writing file %s to folder %s\n", filename, argv[3]);
