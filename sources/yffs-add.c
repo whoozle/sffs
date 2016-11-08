@@ -49,14 +49,15 @@ int main(int argc, char **argv) {
   fs.write = fs_write_func;
   fs.read = fs_read_func;
   fs.seek = fs_seek_func;
-  if (mount_image(&fs, argv[1]) == -1)
+  if (mount_image(&fs, argv[1]) == -1){
+    printf("Mount failed\n");
     return 2;
+  }
 	
   int src_fd = -1;
   off_t src_size = 0;
   void *src_data = 0;
   char * filename = strdup(argv[2]);
-  //printf("reading source %s...\n", filename);
   src_fd = open(filename, O_RDONLY);
   if (src_fd == -1) {
     //printf("file doesnt exist, creating it...\n");
@@ -79,22 +80,41 @@ int main(int argc, char **argv) {
   }
 	
   lseek(src_fd, 0, SEEK_SET);
+
+  //Check if file is a folder then create a folder in the filesystem
+
   if (read(src_fd, src_data, src_size) != src_size) {
     perror("short read");
     goto next;
   }
   close(src_fd);
+
+
+  struct stat buf;
+  if (yffs_stat(&fs, filename, &buf) == -1){
+    //Check to see if the file exists
+  }
+  else{
+    LOG_ERROR(("File %s already exists", filename));
+    return 1;
+  }
   
   if( argc == 4 ){
-	  	printf("Writing file %s to folder %s\n", filename, argv[3]);   
+	  	printf("Writing file %s to folder %s\n", filename, argv[3]);
+      //Check if folder exists
+      //if()
+      //Add file into folder
+
+
   } else { // argc == 3 
 	printf("Writing file %s\n", filename);   
   }  
   //**encrypt src_data**
-  encrypt(argv[2], 0);
+  //encrypt(argv[2], 0);
   if (yffs_write(&fs, filename, src_data, src_size) == -1)
     goto next;
 #if 0
+  printf("Error\n");
   memset(src_data, '@', src_size);
   yffs_read(&fs, argv[f], src_data, src_size);
   fwrite(src_data, 1, src_size, stdout);

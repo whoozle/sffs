@@ -87,9 +87,21 @@ int main(int argc, char **argv) {
 		/* argv[f] is filename to encrypt
 		encrypt(argv[f], n) where n is encryption method
 		*/
-		printf("Removed \'%s\'\n", argv[f]);
-		encrypt(argv[f], 0);
-		yffs_unlink(&fs, argv[f], recursive);
+		if (strcmp(argv[f], "-r") != 0){
+		    int index = strlstchar(argv[f], '/');
+		    char * directory = (char*)substring(argv[f], 0, index+1);
+		    if(index == -1){
+		      char * buff = "/";
+		      directory = buff;
+		    }
+
+		    char * filename;
+		    filename = (char *)substring(argv[f], index+1, strlen(argv[f]) - (index+1));
+		    
+			printf("Removed \'%s\'\n", filename);
+			//encrypt(argv[f], 0);
+			yffs_unlink(&fs, filename, recursive);
+		}
 	}
 
 	

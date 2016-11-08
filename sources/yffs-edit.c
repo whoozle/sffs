@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
 		if (argc != 3) {
 			f = 3; 
-            encrypt(argv[f], 0);
+            //encrypt(argv[f], 0);
 			if (access(argv[f], F_OK) == -1) {
 				printf("File not found\n");
 				exit(1);
@@ -101,7 +101,33 @@ int main(int argc, char **argv) {
 				exit(1);
 			}
 			src = malloc(buf.st_size);
-			r = yffs_read(&fs, fname, src, buf.st_size);
+
+			int dir_len, fname_len;
+		    int index = strlstchar(fname, '/');
+		    char * directory = (char*)substring(fname, 0, index+1);
+		    if(index == -1){
+		      printf("No folder given\n");
+		      char * buff = "/";
+		      printf("Strlen is %d\n", 1);
+		      directory = buff;
+		      dir_len = 1;
+		    }
+		    else{
+		      dir_len = strlen(directory);
+		    }
+		    printf("Dir is %s\n", directory);
+
+		    // //Set the name into file
+		    // file->name = (char *)malloc((strlen(fname) - (index+1)) *sizeof(char));
+		    char * filename;
+		    filename = (char *)substring(fname, index+1, strlen(fname) - (index+1));
+
+		    printf("File is %s\n", filename);
+
+		    fname_len = strlen(filename);
+		    printf("%s %s\n", directory, filename);
+
+			r = yffs_read(&fs, directory, fname, src, buf.st_size);
 			//**decrypt somewhere around here**
 			fwrite(src, 1, r, tmp);
 			free(src);
@@ -175,7 +201,7 @@ int main(int argc, char **argv) {
 		//writes the file
 		//argv[2] is filename to obfuscate
 
-        encrypt(argv[2], 1);
+        //encrypt(argv[2], 1);
 		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0
