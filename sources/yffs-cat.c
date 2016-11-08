@@ -77,10 +77,37 @@ int main(int argc, char **argv) {
     char *fname = argv[f];
     void *src;
     ssize_t r;
-    encrypt(fname, 0);
-    if (yffs_stat(&fs, fname, &buf) == 1)
-      continue;
-    //printf("%s = %zu\n", fname, buf.st_size);
+
+
+    int index = strlstchar(fname, '/');
+    char * directory = (char*)substring(fname, 0, index+1);
+
+    if(index == -1){
+      char * buff = "/";
+      directory = buff;
+    }
+
+    char * filename;
+    filename = (char *)substring(fname, index+1, strlen(fname) - (index+1));
+
+    if(strcmp(filename, "") == 0)
+    {
+      //Only a folder was given
+      LOG_ERROR(("YFFS: yffs-ls %s %s", argv[1], argv[2]));
+      return 1;
+    }
+
+    //encrypt(fname, 0);
+    if (yffs_stat(&fs, filename, &buf) != -1){
+      //Check to see if the file exists
+    }
+    else{
+      LOG_ERROR(("File %s not found", filename));
+      return 1;
+    }
+
+    //printf("%s = %zu\n", filename, buf.st_size);
+    //printf("Pre malloc\n");
     src = malloc(buf.st_size);
     if (!src)
       return 1;
@@ -89,7 +116,8 @@ int main(int argc, char **argv) {
     encrypt(fname, n) where n is encryption mode
     if you choose incorrect n the file will not be found 
     */
-    r = yffs_read(&fs, fname, src, buf.st_size);
+    
+    r = yffs_read(&fs, directory, filename, src, buf.st_size);
     if (r < 0)
       return 1;
     fwrite(src, 1, r, stdout);

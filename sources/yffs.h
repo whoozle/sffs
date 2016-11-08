@@ -80,7 +80,7 @@ int yffs_mount(struct yffs *fs);
 int yffs_umount(struct yffs *fs);
 
 ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t size);
-ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size);
+ssize_t yffs_read(struct yffs *fs, const char * directory, const char *fname, void *data, size_t size);
 int yffs_unlink(struct yffs *fs, const char *fname, int recursive);
 int yffs_stat(struct yffs *fs, const char *fname, struct stat *buf);
 const char* yffs_filename(struct yffs *fs, size_t index, char * directory);
@@ -88,6 +88,8 @@ size_t yffs_get_largest_free(struct yffs *fs);
 size_t yffs_get_total_free(struct yffs *fs);
 void encrypt(char * fname, int mode);
 void decrypt(char * fname, int mode);
+char * substring(char *string, int position, int length);
+size_t strlstchar(const char *str, const char ch);
 
 #ifdef __cplusplus
 }

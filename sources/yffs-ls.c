@@ -78,18 +78,52 @@ int main(int argc, char **argv) {
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
 
-  printf("Starting ls\n");
+  //Create array and only insert duplicates
+  int length = fs.files.size / sizeof(struct yffs_entry);
+
+  //printf("There are %d files in the system\n", length);
+
+  char * names[length];
+  int index = 0;
+  for(i = 0 ; i < length; i++)
+  {
+    names[i] = (char *)malloc(128 * sizeof(char));
+  }
 
   if (argc > 2)
   {
     //Loop through all of the arguments and list out folders
     for(i = 2; i < argc; i++)
     {
-      printf("%s\n", argv[i]);
+      //printf("%s\n", argv[i]);
       //List out the contents in each folder
       for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
-        decrypt(name, 0);
-        printf("%s\t", name);
+        //decrypt(name, 0);
+        if(strcmp(name, "") != 0){
+          //Insert into array of names
+          int k, foundFlag = 0;
+          for(k = 0; k < length; k++)
+          {
+            if(strcmp(names[k], name) == 0)
+            {
+              //Set the flag to let us know not to add this
+              foundFlag = 1;
+            }
+          }
+
+          //Check foundFlag and add to array if it is new
+          if(foundFlag == 0)
+          {
+            names[index++] = name;
+          }
+        }
+      }
+      for(j = 0; j < length; j++)
+      {
+        if(strcmp(names[j], "") != 0)
+        {
+          printf("%s\t", names[j]);
+        }
       }
       printf("\n");
     }
@@ -97,17 +131,42 @@ int main(int argc, char **argv) {
   else
   {
     //Print out file names
-    for(i = 0; (name = yffs_filename(&fs, i, "")) != 0; ++i) {
+    for(i = 0; (name = yffs_filename(&fs, i, "/")) != 0; ++i) {
       /*
       name needs to be actually decrypted
       decrypt(name, n) where n is decrytpion method
       */
-      decrypt(name, 0);
-      printf("%s\t", name);
-      permbits = yffs_permission(&fs, i);
-      printf("%d\n", permbits);
-    }
-    printf("\n");
+      //decrypt(name, 0);
+      if(strcmp(name, "") != 0){
+          //Insert into array of names
+          int k, foundFlag = 0;
+          for(k = 0; k < length; k++)
+          {
+            if(strcmp(names[k], name) == 0)
+            {
+              //Set the flag to let us know not to add this
+              foundFlag = 1;
+            }
+          }
+
+          //Check foundFlag and add to array if it is new
+          if(foundFlag == 0)
+          {
+            names[index++] = name;
+          }
+        }
+      }
+      for(j = 0; j < length; j++)
+      {
+        if(strcmp(names[j], "") != 0)
+        {
+          printf("%s\t", names[j]);
+          // printf("%s\t", name);
+          // permbits = yffs_permission(&fs, i);
+          // printf("%d\n", permbits);
+        }
+      }
+      printf("\n");
   }
   
 
