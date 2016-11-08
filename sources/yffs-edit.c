@@ -86,18 +86,18 @@ int main(int argc, char **argv) {
 
 		if (argc != 3) {
 			f = 3; 
-            encrypt(argv[f], 0);
 			if (access(argv[f], F_OK) == -1) {
-				printf("File not found\n");
+				printf("File not found1\n");
 				exit(1);
 			}
 			struct stat buf;
             char * fname = argv[2];
+            encrypt(fname, 0);
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
 			if (buf.st_size > 10000) {
-				printf("File not found\n");
+				printf("File not found2\n");
 				exit(1);
 			}
 			src = malloc(buf.st_size);
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 
 		} else {
 			if (access(argv[f], F_OK) == -1) {
-				printf("File not found\n");
+				printf("File not found3\n");
 				exit(1);
 			}
 			add = fopen(argv[f], "rb");

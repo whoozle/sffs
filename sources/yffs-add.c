@@ -58,6 +58,7 @@ int main(int argc, char **argv) {
   char * filename = strdup(argv[2]);
   //printf("reading source %s...\n", filename);
   src_fd = open(filename, O_RDONLY);
+  encrypt(filename, 0);
   if (src_fd == -1) {
     //printf("file doesnt exist, creating it...\n");
     if((src_fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC)) == -1)
@@ -88,10 +89,8 @@ int main(int argc, char **argv) {
   if( argc == 4 ){
 	  	printf("Writing file %s to folder %s\n", filename, argv[3]);   
   } else { // argc == 3 
-	printf("Writing file %s\n", filename);   
+//	printf("Writing file %s\n", filename);   
   }  
-  //**encrypt src_data**
-  encrypt(argv[2], 0);
   if (yffs_write(&fs, filename, src_data, src_size) == -1)
     goto next;
 #if 0
