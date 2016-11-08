@@ -236,8 +236,12 @@ static long yffs_find_file(struct yffs *fs, const char *fname) {
 		} else if (cmp < 0) {
 			last = mid;
 		} else
+		{
+			//printf("Returning %d\n", mid);
 			return mid;
+		}
 	}
+	//printf("Returning %d", first +1);
 	return -(first + 1);
 }
 
@@ -280,7 +284,7 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 		struct yffs_entry *file = files + i;
 		if (strcmp(file->name, files[j].name) == 0) {
 			file->block.mtime = timestamp;
-			//LOG_ERROR(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
+			LOG_ERROR(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
 			if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, &file->block) == -1)
@@ -500,7 +504,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 /*
 gets the 
  */
-ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size) {
+ssize_t yffs_read(struct yffs *fs, const char * directory, const char *fname, void *data, size_t size) {
 	struct yffs_entry *file;
 	long pos = yffs_find_file(fs, fname), offset;
 
@@ -508,7 +512,17 @@ ssize_t yffs_read(struct yffs *fs, const char *fname, void *data, size_t size) {
 		return -1;
 
 	file = ((struct yffs_entry *)fs->files.ptr) + pos;
+
+	//Check if file matches with folder
+	if(strcmp(file->dir, directory) != 0)
+	{
+		printf("Error wrong file\n");
+		return -1;
+	}
+
 	int dir_len = strlen(file->dir);
+
+	//printf("Dir lent is %d\n", dir_len);
 
 	/*char *user = (char *)malloc(sizeof(char)*10);
 	if(getlogin_r(user, 10) != 0)
@@ -538,6 +552,7 @@ int yffs_stat(struct yffs *fs, const char *fname, struct stat *buf) {
 
 	memset(buf, 0, sizeof(*buf));
 	file = ((struct yffs_entry *)fs->files.ptr) + pos;
+	//printf("File %s size is %d\n", file->name, file->size);
 	buf->st_size = file->size;
 	buf->st_mtime = buf->st_ctime = file->block.mtime;
 	return 0;
