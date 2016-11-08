@@ -98,13 +98,14 @@ int main(int argc, char **argv) {
     }
 
     //encrypt(fname, 0);
-    if (yffs_stat(&fs, filename, &buf) == 1)
-      continue;
+    if (yffs_stat(&fs, filename, &buf) != -1){
+      //Check to see if the file exists
+    }
     else{
       LOG_ERROR(("File %s not found", filename));
       return 1;
     }
-    
+
     //printf("%s = %zu\n", filename, buf.st_size);
     //printf("Pre malloc\n");
     src = malloc(buf.st_size);
