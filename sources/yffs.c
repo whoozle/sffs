@@ -442,7 +442,6 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	  printf("problem getting user login...\n");
 	file->owner = user;
 	file->permBits = 14; //"rwr-" as default permissions settings
-	printf("default permbits: %d\n", file->permBits);
 
 	full_size = yffs_HEADER_SIZE + dir_len + fname_len + size;
 	best_free = find_best_free(fs, full_size);
@@ -522,7 +521,7 @@ ssize_t yffs_read(struct yffs *fs, const char * directory, const char *fname, vo
 
 	int dir_len = strlen(file->dir);
 
-	//printf("Dir lent is %d\n", dir_len);
+	printf("Dir lent is %d\n", dir_len);
 
 	/*char *user = (char *)malloc(sizeof(char)*10);
 	if(getlogin_r(user, 10) != 0)
