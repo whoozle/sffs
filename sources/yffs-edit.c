@@ -61,10 +61,9 @@ int main(int argc, char **argv) {
 	struct yffs fs;
 	pthread_mutex_init(&mutex, NULL);
 
-	if (argc < 3) {
+	if (argc < 4) {
 		printf("Usage:\n\n"
-			   "\twrite:    ./yffs-write fsname.img newFile\n"
-			"\twrite: 	./yffs-write fsname.img orignal new\n");	
+			"\twrite: 	./yffs-write fsname.img orignalFile fileToAppend\n");	
 		return 0;
 	}
 
@@ -175,7 +174,7 @@ int main(int argc, char **argv) {
 		//writes the file
 		//argv[2] is filename to obfuscate
 
-        encrypt(argv[2], 1);
+        //encrypt(argv[2], 1);
 		if (yffs_write(&fs, argv[2], src_data, src_size) == -1)
 			goto next;
 #if 0
