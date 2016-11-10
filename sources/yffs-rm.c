@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 		    filename = (char *)substring(argv[f], index+1, strlen(argv[f]) - (index+1));
 		    
 			printf("Removed \'%s\'\n", filename);
-			//encrypt(argv[f], 0);
+			encrypt(argv[f], argv[argc - 1]);
 			yffs_unlink(&fs, filename, recursive);
 		}
 	}

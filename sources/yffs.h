@@ -86,8 +86,8 @@ int yffs_stat(struct yffs *fs, const char *fname, struct stat *buf);
 const char* yffs_filename(struct yffs *fs, size_t index, char * directory);
 size_t yffs_get_largest_free(struct yffs *fs);
 size_t yffs_get_total_free(struct yffs *fs);
-void encrypt(char * fname, int mode);
-void decrypt(char * fname, int mode);
+void encrypt(char * fname, char * argv);
+void decrypt(char * fname, char * argv);
 char * substring(char *string, int position, int length);
 size_t strlstchar(const char *str, const char ch);
 

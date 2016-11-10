@@ -728,20 +728,19 @@ int yffs_umount(struct yffs *fs) {
 	return 0;
 }
 
-void encrypt(char * fname, int mode) {
+void encrypt(char * fname, char * argv) {
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
             fname[i++]++;
         }
-        return;
 }
 
-void decrypt(char * fname, int mode) {
+void decrypt(char * fname, char * argv) {
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
-            fname[i++]--;
+            fname[i++]++;
         }
 }
 

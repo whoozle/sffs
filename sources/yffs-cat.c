@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    //encrypt(fname, 0);
+    encrypt(filename, argv[argc - 1]);
     if (yffs_stat(&fs, filename, &buf) != -1){
       //Check to see if the file exists
     }
