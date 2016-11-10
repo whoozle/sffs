@@ -2,7 +2,7 @@
 #define yffs_HEADER_SIZE (16)
 
 //If you set this to 1 it will remove encryption/decryption, if that is causing other members problems
-static int testing = 0;
+static int testing = 1;
 
 int yffs_entry_compare(const void *a, const void *b) {
 	struct yffs_entry *ea = (struct yffs_entry *)a;
@@ -729,23 +729,18 @@ int yffs_umount(struct yffs *fs) {
 }
 
 void encrypt(char * fname, char * argv) {
-        int mode = atoi(argv);
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
-            fname[i] = fname[i] + mode;
-            i++;
+            fname[i++]++;
         }
-        return;
 }
 
 void decrypt(char * fname, char * argv) {
-        int mode = atoi(argv);
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
-            fname[i] = fname[i] - mode;
-            i++;
+            fname[i++]++;
         }
 }
 

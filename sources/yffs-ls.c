@@ -97,8 +97,10 @@ int main(int argc, char **argv) {
     {
       //printf("%s\n", argv[i]);
       //List out the contents in each folder
+      encrypt(argv[i], argv[argc - 1]);
       for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
-        //decrypt(name, 0);
+        decrypt(name, argv[argc - 1]);
+        printf("name: %s\n", name);
         if(strcmp(name, "") != 0){
           //Insert into array of names
           int k, foundFlag = 0;
