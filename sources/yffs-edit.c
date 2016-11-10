@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 			}
 			struct stat buf;
             char * fname = argv[2];
-            encrypt(fname, 0);
+            encrypt(fname, argv[argc - 1]);
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);

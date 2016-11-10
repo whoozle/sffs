@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
       name needs to be actually decrypted
       decrypt(name, n) where n is decrytpion method
       */
-      //decrypt(name, 0);
+      decrypt(name, argv[argc - 1]);
       if(strcmp(name, "") != 0){
           //Insert into array of names
           int k, foundFlag = 0;
