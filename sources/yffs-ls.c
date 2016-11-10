@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
       //List out the contents in each folder
       encrypt(argv[i], argv[argc - 1]);
       for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
-        decrypt(name, argv[argc - 1]);
+        decrypt_file(name, argv[argc - 1]);
         printf("name: %s\n", name);
         if(strcmp(name, "") != 0){
           //Insert into array of names
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
       name needs to be actually decrypted
       decrypt(name, n) where n is decrytpion method
       */
-      decrypt(name, argv[argc - 1]);
+      decrypt_file(name, argv[argc - 1]);
       if(strcmp(name, "") != 0){
           //Insert into array of names
           int k, foundFlag = 0;

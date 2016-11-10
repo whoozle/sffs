@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    encrypt(filename, argv[argc - 1]);
+    encrypt_file(filename, argv[argc - 1]);
     if (yffs_stat(&fs, filename, &buf) != -1){
       //Check to see if the file exists
     }
@@ -112,8 +112,8 @@ int main(int argc, char **argv) {
     if (!src)
       return 1;
     /*fname is filename that needs to be "decrypted"
-    in reality if you encrypt fname the same way it'll work 
-    encrypt(fname, n) where n is encryption mode
+    in reality if you encrypt_file fname the same way it'll work 
+    encrypt_file(fname, n) where n is encrypt_fileion mode
     if you choose incorrect n the file will not be found 
     */
     

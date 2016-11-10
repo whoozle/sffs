@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
   void *src_data = 0;
   char * filename = strdup(argv[2]);
   src_fd = open(filename, O_RDONLY);
-  encrypt(filename, argv[argc - 1]);
+  encrypt_file(filename, argv[argc - 1]);
   if (src_fd == -1) {
     //printf("file doesnt exist, creating it...\n");
     if((src_fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC)) == -1)
