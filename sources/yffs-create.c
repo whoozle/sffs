@@ -18,7 +18,7 @@ static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
         LOG_ERROR(("yffs: avoid writing block <= 16b."));
         return -1;
     }
-    char header[yffs_HEADER_SIZE] = {
+    char header[yffs_HEADER_SIZE] = {//header indexes used are: 1, 2, 10, 11 (encryption), 12 (owner_len), 13 (permbyte), 14 (dir_len)
         0, 0, 0, 0, 0, /*1:flags(empty) + size, current 1st*/
         0, 0, 0, 0, 0, /*2:flags + size*/
         0, 0, 0, 0, 0, 0, /*mtime + padding + fname len */
