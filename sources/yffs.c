@@ -118,7 +118,7 @@ static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
 		//LOG_ERROR(("yffs: avoid writing block <= 16b."));
 		return -1;
 	}
-	char header[yffs_HEADER_SIZE] = { //header indexes used 0, 1, 10, 11, 12 (owner_len), 13 (permbyte), 14 (dir_len)
+	char header[yffs_HEADER_SIZE] = { //header indexes used0, 1, 10, 11, 12 (owner_len), 13 (permbyte), 14 (dir_len)
 		0, 0, 0, 0, 0, /*1:flags(empty) + size, current 1st*/
 		0, 0, 0, 0, 0, /*2:flags + size*/
 		0, 0, 0, 0, 0, 0, /*mtime + padding + dir_len + fname len */
@@ -473,11 +473,13 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	file->size = size;
 
 	/*writing data*/
-	if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len, data, size) == -1)
+/*TODO!!!*/if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len /*+ ownerlen*/, data, size) == -1)
 		return -1;
 	/*writing metadata*/
 	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, padding) == -1)
 		return -1;
+	/*write owner*/ //use 'write dirname' below, as a template
+
 	/*write dirname*/
 	if(fs->write(file->dir, dir_len) != dir_len)
 	{
