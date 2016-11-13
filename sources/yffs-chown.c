@@ -53,76 +53,61 @@ int main(int argc, char **argv) {
     printf("Mount failed\n");
     return 2;
   }
-	
-  /*int src_fd = -1;
-  off_t src_size = 0;
-  void *src_data = 0;
-  char * filename = strdup(argv[2]);
-  src_fd = open(filename, O_RDONLY);*/
-  encrypt_file(filename, argv[argc - 1]);
-  /*if (src_fd == -1) {
-    //printf("file doesnt exist, creating it...\n");
-    if((src_fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC)) == -1)
-      perror("problem creating file\n");
-    close(src_fd);
-    if ((src_fd = open(filename, O_RDONLY)) == -1)
-      perror("issue opening file...\n");
-  }
-    
-  src_size = lseek(src_fd, 0, SEEK_END);
-  if (src_size == (off_t) -1) {
-    perror("lseek");
-    goto next;
-  }
-  src_data = malloc(src_size);
-  if (src_data == NULL) {
-    perror("malloc");
-    goto next;
-  }
-	
-  lseek(src_fd, 0, SEEK_SET);
-
-  //Check if file is a folder then create a folder in the filesystem
-
-  if (read(src_fd, src_data, src_size) != src_size) {
-    perror("short read");
-    goto next;
-  }
-  close(src_fd);*/
-
-
+  //char *filename = strdup(argv[2]);
+  //encrypt_file(filename, argv[argc - 1]);
   struct stat buf;
-  if (yffs_stat(&fs, filename, &buf) == -1){
-    //Check to see if the file exists
-  }
-  else{
-    LOG_ERROR(("File %s already exists", filename));
-    return 1;
-  }
+   //for(f = 2; f < argc; ++f) {
+    char *fname = argv[2];
+    void *src;
+    ssize_t r;
+
+
+    int index = strlstchar(fname, '/');
+    char * directory = (char*)substring(fname, 0, index+1);
+
+    if(index == -1){
+      char * buff = "/";
+      directory = buff;
+    }
+
+    char * filename;
+    filename = (char *)substring(fname, index+1, strlen(fname) - (index+1));
+
+    if(strcmp(filename, "") == 0)
+    {
+      //Only a folder was given
+      LOG_ERROR(("YFFS: yffs-ls %s %s", argv[1], argv[2]));
+      return 1;
+    }
+
+    encrypt_file(filename, argv[argc - 1]);
+    if (yffs_stat(&fs, filename, &buf) != -1){
+      //Check to see if the file exists
+    }
+    else{
+      LOG_ERROR(("File %s not found", filename));
+      return 1;
+    }
+
+
+    //printf("%s = %zu\n", filename, buf.st_size);
+    //printf("Pre malloc\n");
+    src = malloc(buf.st_size);
+    if (!src)
+      return 1;
+    /*fname is filename that needs to be "decrypted"
+    in reality if you encrypt_file fname the same way it'll work 
+    encrypt_file(fname, n) where n is encrypt_fileion mode
+    if you choose incorrect n the file will not be found 
+    */
+    
+    r = yffs_read(&fs, directory, filename, src, buf.st_size);
+    if (r < 0)
+      return 1;
+  //} 
   
-  if( argc == 4 ){
-	  	printf("Writing file %s to folder %s\n", filename, argv[3]);
-      //Check if folder exists
-      //if()
-      //Add file into folder
-
-
-  } else { // argc == 3 
-//	printf("Writing file %s\n", filename);   
-  }  
-  if (yffs_write(&fs, filename, src_data, src_size) == -1)
-    goto next;
-#if 0
-  printf("Error\n");
-  memset(src_data, '@', src_size);
-  yffs_read(&fs, argv[f], src_data, src_size);
-  fwrite(src_data, 1, src_size, stdout);
-#endif
- next:
-  free(src_data);
-  close(src_fd);
-  remove(filename);
-		
+  yffs_write_own(&fs, filename, src, r, strdup(argv[3]));
+  
   //printf("unmounting...\n");
   yffs_umount(&fs);
 

@@ -453,7 +453,132 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	  printf("problem getting user login...\n");
 	file->owner = user;
 	file->permBits = 14; //"rwr-" as default permissions settings
-	owner_len = 10;
+	owner_len = strlen(file->owner);
+
+	full_size = yffs_HEADER_SIZE + dir_len + owner_len + fname_len + size;
+	best_free = find_best_free(fs, full_size);
+	if (!best_free) {
+		LOG_ERROR(("yffs: no space left on device"));
+		return -1;
+	}
+
+	best_size = best_free->end - best_free->begin;
+	tail_size = best_size - full_size;
+	offset = best_free->begin;
+	if (tail_size > yffs_HEADER_SIZE) {
+		/*mark up empty block inside*/
+		best_free->begin = offset + full_size;
+		if (yffs_write_empty_header(fs, best_free) == -1) 
+			return -1;
+		padding = 0;
+	} else {
+		/* tail_size == yffs_HEADER_SIZE or less */
+		padding = tail_size;
+		full_size += padding;
+		yffs_vector_remove(&fs->free, best_free - (struct yffs_block *)fs->free.ptr, sizeof(struct yffs_block));
+	}
+	//LOG_ERROR(("yffs: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
+	file->block.begin = offset;
+	file->block.end = offset + full_size;
+	file->block.mtime = (uint32_t)time(0);
+	file->padding = padding;
+	file->size = size;
+
+	/*writing data*/
+	if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len + owner_len, data, size) == -1)
+		return -1;
+	/*writing metadata*/
+	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, owner_len, padding) == -1)
+		return -1;
+	/*write owner*/ 
+	if(fs->write(file->owner, owner_len) != owner_len)
+	{
+		//LOG_ERROR(("yffs: error writing owner (len: %zu)", dir_len));
+		return -1;
+	}
+	
+	/*write dirname*/
+	if(fs->write(file->dir, dir_len) != dir_len)
+	{
+		//LOG_ERROR(("yffs: error writing directory (len: %zu)", dir_len));
+		return -1;
+	}
+	/*write filename*/
+	if (fs->write(file->name, fname_len) != fname_len) {
+		//LOG_ERROR(("yffs: error writing filename (len: %zu)", fname_len));
+		return -1;
+	}
+	/*commit*/
+	if (yffs_commit_metadata(fs, &file->block) == -1)
+		return -1;
+
+	if (remove_me >= 0) {
+		/*removing old copy*/
+		yffs_unlink_at(fs, remove_me, 0);
+	}
+	return size;
+}
+
+//same as yffs_write with the owner specified
+ssize_t yffs_write_own(struct yffs *fs, const char *fname, const void *data, size_t size, char *owner) {
+
+	//Get the file without any slashes
+	int index = strlstchar(fname, '/');
+
+	size_t fname_len, dir_len, owner_len, best_size, full_size, tail_size;
+	struct yffs_entry *file;
+	long remove_me;
+	struct yffs_block *best_free;
+	off_t offset;
+	uint8_t padding;
+
+	long pos = yffs_find_file(fs, fname);
+	if (pos < 0) {
+		remove_me = -1;
+		pos = -pos - 1;
+	} else {
+		remove_me = pos + 1;
+		//LOG_ERROR(("yffs: old file in position %ld", remove_me));
+	}
+	file = (struct yffs_entry *)yffs_vector_insert(&fs->files, pos, sizeof(struct yffs_entry));
+	if (!file) {
+		//LOG_ERROR(("yffs: inserting file struct failed!"));
+		return -1;
+	}
+	/*//LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct yffs_entry *)fs->files.ptr)[pos].name, ((struct yffs_entry *)fs->files.ptr)[pos + 1].name));*/
+	//printf("Pre substring\n");
+	//Insert the rest of the directory into dir attribute in yffs_entry
+	char * directory = (char*)substring(fname, 0, index+1);
+	if(index == -1){
+		//printf("No folder given\n");
+		char * buff = "/";
+		//printf("Strlen is %d\n", 1);
+		file->dir = (char *)malloc(1 * sizeof(char));
+		file->dir = buff;
+		dir_len = 1;
+	}
+	else{
+		file->dir = (char *)malloc(strlen(directory) * sizeof(char));
+		file->dir = directory;
+		dir_len = strlen(directory);
+	}
+	//printf("Dir is %s\n", directory);
+	//printf("Set to %s\n", file->dir);
+
+	//Set the name into file
+	file->name = (char *)malloc((strlen(fname) - (index+1)) *sizeof(char));
+	file->name = (char *)substring(fname, index+1, strlen(fname) - (index+1));
+
+	//printf("File is %s\n", file->name);
+
+	fname_len = strlen(file->name);
+
+	/*char *user = (char *)malloc(sizeof(char)*10);
+	if(getlogin_r(user, 10) != 0)
+	  printf("problem getting user login...\n");*/
+	file->owner = owner;
+	file->permBits = 14; //"rwr-" as default permissions settings
+	owner_len = strlen(owner);
 
 	full_size = yffs_HEADER_SIZE + dir_len + owner_len + fname_len + size;
 	best_free = find_best_free(fs, full_size);
@@ -539,7 +664,7 @@ ssize_t yffs_read(struct yffs *fs, const char * directory, const char *fname, vo
 	}
 
 	int dir_len = strlen(file->dir);
-	int owner_len = 10;
+	int owner_len = strlen(file->owner);
 
 	printf("Dir lent is %d\n", dir_len);
 
