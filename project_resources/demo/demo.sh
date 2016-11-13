@@ -21,10 +21,23 @@ if [ ${#var} -eq 0 ]; then
   echo "Creating files"
   for i in {0..100}
     do
-      echo "File${i}" > "File${i}.txt"
+     echo "File${i}" > "File${i}.txt"
       ../../bin/yffs-add iso.img "File${i}.txt"
     done  
 fi
+
+#printf "\nInserting files in folders into image\n"
+#
+#read -p "[Enter]" var
+#if [ ${#var} -eq 0 ]; then
+#  echo "Creating files"
+#  for i in {0..100}
+#    do
+#      echo "File${i}" > "File${i}.txt"
+#      ../../bin/yffs-add iso.img "testfolder/File${i}.txt"
+#    done  
+#fi
+
 
 printf "\nListing files\n"
 
