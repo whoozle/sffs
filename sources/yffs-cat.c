@@ -94,11 +94,6 @@ int main(int argc, char **argv) {
     char * filename;
     filename = (char *)substring(fname, index+1, strlen(fname) - (index+1));
 
-    if(have_read(&fs, filename) == 0) { //exit if user doesnt have read permissions
-	    printf("user does not have permissions to access file\n");
-	    return 0;
-    }
-
     if(strcmp(filename, "") == 0)
     {
       //Only a folder was given
@@ -107,6 +102,13 @@ int main(int argc, char **argv) {
     }
 
     encrypt_file(filename, mode);
+
+    if(have_read(&fs, filename) == 0) { //exit if user doesnt have read permissions
+	    printf("user does not have permissions to access file\n");
+	    return 0;
+    }
+
+
     if (yffs_stat(&fs, filename, &buf) != -1){
       //Check to see if the file exists
     }

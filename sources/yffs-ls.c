@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
     names[i] = (char *)malloc(128 * sizeof(char));
   }
 
-  if (0)
+  if (argc > 2 && mode == 0)
   {
     //Loop through all of the arguments and list out folders
     for(i = 3; i < argc; i++)
@@ -175,8 +175,11 @@ int main(int argc, char **argv) {
         if(strcmp(names[j], "") != 0)
         {
           printf("%s\t", names[j]);
-	  printf("%d\t", permbits[j]);
-	  printf("%s\n", owners[j]);
+	  if (strchr(names[j], '/') == NULL) {
+	  	printf("%d\t", permbits[j]);
+	  	printf("%s", owners[j]);
+	  }
+	  printf("\n");
         }
       }
   }
