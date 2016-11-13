@@ -103,23 +103,6 @@ const char* yffs_filename(struct yffs *fs, size_t index, char * directory) {
 		return 0;
 }
 
-//gets the permission bits at 'index'
-const unsigned int yffs_permission(struct yffs *fs, size_t index) {
-	index *= sizeof(struct yffs_entry);
-	if (index < fs->files.size) {
-		return ((struct yffs_entry *)(fs->files.ptr + index))->permBits;
-	} else
-		return 0;
-}
-
-//gets the owner at 'index'
-const char *yffs_owner(struct yffs *fs, size_t index) {
-	index *= sizeof(struct yffs_entry);
-	if (index < fs->files.size) {
-		return ((struct yffs_entry *)(fs->files.ptr + index))->owner;
-	} else
-		return 0;
-}
 
 static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
 	size_t size = block->end - block->begin;
@@ -127,7 +110,7 @@ static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
 		//LOG_ERROR(("yffs: avoid writing block <= 16b."));
 		return -1;
 	}
-	char header[yffs_HEADER_SIZE] = { //header indexes used0, 1, 10, 11, 12 (owner_len), 13 (permbyte), 14 (dir_len)
+	char header[yffs_HEADER_SIZE] = { //header indexes used 0, 1, 10, 11, 12 (owner_len), 13 (permbyte), 14 (dir_len)
 		0, 0, 0, 0, 0, /*1:flags(empty) + size, current 1st*/
 		0, 0, 0, 0, 0, /*2:flags + size*/
 		0, 0, 0, 0, 0, 0, /*mtime + padding + dir_len + fname len */
@@ -192,6 +175,7 @@ static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_
 	header2[2] = owner_len;
 	header2[4] = dir_len;
 	header2[5] = fname_len;
+	header2[3] = 14;
 
 	if (yffs_write_at(fs, block->begin + 10, header2, 6) == -1)
 		return -1;
@@ -281,6 +265,99 @@ static int yffs_compact(struct yffs *fs) {
 			++i;
 	}
 	return 0;
+}
+
+//gets the permission bits at 'index'
+const char yffs_permission(struct yffs *fs, const char *filename) {
+	struct yffs_entry *file;
+	long pos = yffs_find_file(fs, filename), offset;
+
+	if (pos < 0)
+		return 0;
+
+	file = ((struct yffs_entry *)fs->files.ptr) + pos;
+
+	int dir_len = strlen(file->dir);
+	int owner_len = strlen(file->owner);
+
+	offset = file->block.begin; // + yffs_HEADER_SIZE + strlen(filename) + dir_len + owner_len;
+	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
+		return 0;
+	}
+
+	uint8_t header[yffs_HEADER_SIZE];
+
+	
+	if (fs->read(header, sizeof(header)) != sizeof(header)) {
+		//LOG_ERROR(("yffs: failed reading block header"));
+		return 0;
+	}
+	
+	return header[13];
+}
+
+//gets the owner at 'index'
+const char *yffs_owner(struct yffs *fs, const char *filename) {
+	long index = yffs_find_file(fs, filename);
+	index *= sizeof(struct yffs_entry);
+	if (index < fs->files.size) {
+		return ((struct yffs_entry *)(fs->files.ptr + index))->owner;
+	} else
+		return 0;
+}
+
+//returns 1 if user has write permissions, 0 otherwise
+int have_write(struct yffs *fs, const char *filename) {
+	char permbit = yffs_permission(fs, filename);
+	char *user = (char *)malloc(sizeof(char)*10);
+	if(getlogin_r(user, 10) != 0)
+	  printf("problem getting user login...\n");
+
+	char *owner = yffs_owner(fs, filename);
+
+	if(strcmp(owner, user) == 0) {
+		printf("you are the owner\n");
+		permbit = permbit & 4;
+		if(permbit != 0)
+			return 1;
+		else
+			return 0;
+	}
+	else {
+		printf("you are NOT the owner\n");
+		permbit = permbit & 1;
+		if(permbit != 0)
+			return 1;
+		else
+			return 0;
+	}
+}
+
+//returns 1 if user has read permissions, 0 otherwise
+int have_read(struct yffs *fs, const char *filename) {
+	char permbit = yffs_permission(fs, filename);
+	char *user = (char *)malloc(sizeof(char)*10);
+	if(getlogin_r(user, 10) != 0)
+	  printf("problem getting user login...\n");
+
+	char *owner = yffs_owner(fs, filename);
+
+	if(strcmp(owner, user) == 0) {
+		printf("you are the owner\n");
+		permbit = permbit & 8;
+		if(permbit != 0)
+			return 1;
+		else
+			return 0;
+	}
+	else {
+		printf("you are NOT the owner\n");
+		permbit = permbit & 2;
+		if(permbit != 0)
+			return 1;
+		else
+			return 0;
+	}
 }
 
 static int yffs_recover_and_remove_old_files(struct yffs *fs) {
@@ -452,7 +529,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	if(getlogin_r(user, 10) != 0)
 	  printf("problem getting user login...\n");
 	file->owner = user;
-	file->permBits = 14; //"rwr-" as default permissions settings
+	//file->permBits = 14; //"rwr-" as default permissions settings
 	owner_len = strlen(file->owner);
 
 	full_size = yffs_HEADER_SIZE + dir_len + owner_len + fname_len + size;
@@ -577,8 +654,9 @@ ssize_t yffs_write_own(struct yffs *fs, const char *fname, const void *data, siz
 	if(getlogin_r(user, 10) != 0)
 	  printf("problem getting user login...\n");*/
 	file->owner = owner;
-	file->permBits = 14; //"rwr-" as default permissions settings
 	owner_len = strlen(owner);
+
+	//file->permBits = 14; //"rwr-" as default permissions settings
 
 	full_size = yffs_HEADER_SIZE + dir_len + owner_len + fname_len + size;
 	best_free = find_best_free(fs, full_size);
@@ -666,15 +744,7 @@ ssize_t yffs_read(struct yffs *fs, const char * directory, const char *fname, vo
 	int dir_len = strlen(file->dir);
 	int owner_len = strlen(file->owner);
 
-	printf("Dir lent is %d\n", dir_len);
-
-	/*char *user = (char *)malloc(sizeof(char)*10);
-	if(getlogin_r(user, 10) != 0)
-	  printf("problem getting user login...\n");
-	if(strcmp(user, file->owner) != 0) {
-	  printf("user is not the owner of the file...\n");
-	  return -1;
-	  }*/
+	//printf("Dir lent is %d\n", dir_len);
 
 	if (size > file->size)
 		size = file->size;
@@ -819,7 +889,7 @@ int yffs_mount(struct yffs *fs) {
 				//LOG_ERROR(("yffs: read(%u) failed", (unsigned)filename_len));
 				goto error;
 			}
-			file->size = block_size - filename_len - dir_len; // - padding; //NOTICE: i did not do anything for owner_len here
+			file->size = block_size - filename_len - dir_len - owner_len; // - padding; //NOTICE: i did not do anything for owner_len here
 			file->name[filename_len] = 0;
 			file->dir[dir_len] = 0;
 			file->owner[owner_len] = 0;
