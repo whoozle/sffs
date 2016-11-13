@@ -2,7 +2,7 @@
 #define yffs_HEADER_SIZE (16)
 
 //If you set this to 1 it will remove encryption/decryption, if that is causing other members problems
-static int testing = 1;
+static int testing = 0;
 
 int yffs_entry_compare(const void *a, const void *b) {
 	struct yffs_entry *ea = (struct yffs_entry *)a;
@@ -523,7 +523,6 @@ ssize_t yffs_read(struct yffs *fs, const char * directory, const char *fname, vo
 
 	int dir_len = strlen(file->dir);
 
-	printf("Dir lent is %d\n", dir_len);
 
 	/*char *user = (char *)malloc(sizeof(char)*10);
 	if(getlogin_r(user, 10) != 0)
@@ -730,19 +729,19 @@ int yffs_umount(struct yffs *fs) {
 	return 0;
 }
 
-void encrypt_file(char * fname, char * argv) {
+void encrypt_file(char * fname, char * mode) {
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
-            fname[i++]++;
+            fname[i] = fname[i++] + mode;
         }
 }
 
-void decrypt_file(char * fname, char * argv) {
+void decrypt_file(char * fname, char * mode) {
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
-            fname[i++]++;
+            fname[i] = fname[i++] - (char) mode;
         }
 }
 
