@@ -112,6 +112,15 @@ const unsigned int yffs_permission(struct yffs *fs, size_t index) {
 		return 0;
 }
 
+//gets the owner at 'index'
+const char *yffs_owner(struct yffs *fs, size_t index) {
+	index *= sizeof(struct yffs_entry);
+	if (index < fs->files.size) {
+		return ((struct yffs_entry *)(fs->files.ptr + index))->owner;
+	} else
+		return 0;
+}
+
 static int yffs_write_empty_header(struct yffs *fs, struct yffs_block *block) {
 	size_t size = block->end - block->begin;
 	if (size <= yffs_HEADER_SIZE) {
@@ -148,9 +157,10 @@ static int yffs_write_at(struct yffs *fs, off_t offset, const void *data, size_t
 	return 0;
 }
 
-static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_t flags, uint8_t fname_len, uint8_t dir_len, uint8_t padding) {
+static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_t flags, uint8_t fname_len, uint8_t dir_len, uint8_t owner_len, uint8_t padding) {
 	uint8_t header[10], header_offset;
-	uint8_t header2[4 + 1 + 1]; /*timestamp + dir_len + filename len */
+	uint8_t header2[4 + 1 + 1]; /*timestamp + dir_len + filename len */ //NOTICE: i did not do anything for owner_len here
+
 	
 	uint32_t size = (uint32_t)(block->end - block->begin - yffs_HEADER_SIZE);
 	if (block->begin + size > fs->device_size) {
@@ -179,6 +189,7 @@ static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_
 	
 	/* update timestamp */
 	*((uint32_t *)header2) = htole32(block->mtime);
+	header2[2] = owner_len;
 	header2[4] = dir_len;
 	header2[5] = fname_len;
 
@@ -258,7 +269,7 @@ static int yffs_compact(struct yffs *fs) {
 		if (free[i].end == free[j].begin) {
 			free[i].end = free[j].end;
 			free[i].mtime = free[i].mtime > free[j].mtime? free[i].mtime: free[j].mtime;
-			if (yffs_write_metadata(fs, free + i, 0, 0, 0, 0) == -1)
+			if (yffs_write_metadata(fs, free + i, 0, 0, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, free + i) == -1)
 				return -1;
@@ -285,7 +296,7 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 		if (strcmp(file->name, files[j].name) == 0) {
 			file->block.mtime = timestamp;
 			LOG_ERROR(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
-			if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0) == -1)
+			if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, &file->block) == -1)
 				return -1;
@@ -313,7 +324,7 @@ static int yffs_unlink_at(struct yffs *fs, size_t pos, int recursive) {
 	// LOG_DEBUG(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
 
 	file->block.mtime = (uint32_t)time(0);
-	if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0) == -1)
+	if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0, 0) == -1)
 		return -1;
 	if (yffs_commit_metadata(fs, &file->block) == -1)
 		return -1;
@@ -389,7 +400,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	//Get the file without any slashes
 	int index = strlstchar(fname, '/');
 
-	size_t fname_len, dir_len, best_size, full_size, tail_size;
+	size_t fname_len, dir_len, owner_len, best_size, full_size, tail_size;
 	struct yffs_entry *file;
 	long remove_me;
 	struct yffs_block *best_free;
@@ -442,8 +453,9 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	  printf("problem getting user login...\n");
 	file->owner = user;
 	file->permBits = 14; //"rwr-" as default permissions settings
+	owner_len = 10;
 
-	full_size = yffs_HEADER_SIZE + dir_len + fname_len + size;
+	full_size = yffs_HEADER_SIZE + dir_len + owner_len + fname_len + size;
 	best_free = find_best_free(fs, full_size);
 	if (!best_free) {
 		LOG_ERROR(("yffs: no space left on device"));
@@ -473,13 +485,18 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	file->size = size;
 
 	/*writing data*/
-/*TODO!!!*/if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len /*+ ownerlen*/, data, size) == -1)
+	if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len + owner_len, data, size) == -1)
 		return -1;
 	/*writing metadata*/
-	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, padding) == -1)
+	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, owner_len, padding) == -1)
 		return -1;
-	/*write owner*/ //use 'write dirname' below, as a template
-
+	/*write owner*/ 
+	if(fs->write(file->owner, owner_len) != owner_len)
+	{
+		//LOG_ERROR(("yffs: error writing owner (len: %zu)", dir_len));
+		return -1;
+	}
+	
 	/*write dirname*/
 	if(fs->write(file->dir, dir_len) != dir_len)
 	{
@@ -522,6 +539,7 @@ ssize_t yffs_read(struct yffs *fs, const char * directory, const char *fname, vo
 	}
 
 	int dir_len = strlen(file->dir);
+	int owner_len = 10;
 
 	printf("Dir lent is %d\n", dir_len);
 
@@ -536,7 +554,7 @@ ssize_t yffs_read(struct yffs *fs, const char * directory, const char *fname, vo
 	if (size > file->size)
 		size = file->size;
 	
-	offset = file->block.begin + yffs_HEADER_SIZE + strlen(fname) + dir_len;
+	offset = file->block.begin + yffs_HEADER_SIZE + strlen(fname) + dir_len + owner_len;
 	//LOG_ERROR(("yffs: reading from offset: %lu, size: %zu", (unsigned long)offset, size));
 	if (fs->seek(offset, SEEK_SET) == (off_t)-1) {
 		//LOG_ERROR(("yffs: seek(%ld, SEEK_SET) failed", offset));
@@ -627,19 +645,24 @@ int yffs_mount(struct yffs *fs) {
 			size_t file_offset = fs->files.size;
 			uint8_t filename_len = header[15], padding = header[14];
 			uint8_t dir_len = header[14];
+			uint8_t owner_len = header[12];
 
 			if (filename_len == 0 || filename_len == 0xff)
 				break;
 
 			if (dir_len == 0 || dir_len == 0xff)
 				break;
-		
+	
+			if (owner_len == 0 || owner_len == 0xff)
+				break;
+			
 			if (yffs_vector_resize(&fs->files, file_offset + sizeof(struct yffs_entry)) == -1)
 				goto error;
 			
 			file = (struct yffs_entry *)((char *)fs->files.ptr + file_offset);
 			file->name = malloc(filename_len + 1);
 			file->dir = malloc(dir_len + 1);
+			file->owner = malloc(owner_len + 1);
 
 			if(!file->dir)
 			{
@@ -651,6 +674,17 @@ int yffs_mount(struct yffs *fs) {
 				goto error;
 			}
 
+			if (!file->owner) {
+				//LOG_ERROR(("yffs: filename allocation failed(%u)", (unsigned)filename_len));
+				goto error;
+			}
+
+			if (fs->read(file->owner, owner_len) != owner_len) {
+				//LOG_ERROR(("yffs: read(%u) failed", (unsigned)filename_len));
+				goto error;
+			}
+
+
 			if (fs->read(file->dir, dir_len) != dir_len) {
 				//LOG_ERROR(("yffs: read(%u) failed", (unsigned)filename_len));
 				goto error;
@@ -660,9 +694,10 @@ int yffs_mount(struct yffs *fs) {
 				//LOG_ERROR(("yffs: read(%u) failed", (unsigned)filename_len));
 				goto error;
 			}
-			file->size = block_size - filename_len - dir_len; // - padding;
+			file->size = block_size - filename_len - dir_len; // - padding; //NOTICE: i did not do anything for owner_len here
 			file->name[filename_len] = 0;
 			file->dir[dir_len] = 0;
+			file->owner[owner_len] = 0;
 
 			// LOG_DEBUG(("yffs: read file %s -> %zu", file->name, file->size));
 
