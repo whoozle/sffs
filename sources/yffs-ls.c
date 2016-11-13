@@ -71,7 +71,8 @@ int main(int argc, char **argv) {
 
   //LIST OBJECTS IN FILESYSTEM
   const char *name;
-  unsigned int permbits;
+  char *owner;
+  char permbit;
   size_t i, total, max;
   size_t j;
 
@@ -84,6 +85,9 @@ int main(int argc, char **argv) {
   //printf("There are %d files in the system\n", length);
 
   char * names[length];
+  char permbits[length];
+  char * owners[length];
+  
   int index = 0;
   for(i = 0 ; i < length; i++)
   {
@@ -138,6 +142,8 @@ int main(int argc, char **argv) {
       name needs to be actually decrypted
       decrypt(name, n) where n is decrytpion method
       */
+      owner = yffs_owner(&fs, name);
+      permbit = yffs_permission(&fs, name);
       decrypt_file(name, argv[argc - 1]);
       if(strcmp(name, "") != 0){
           //Insert into array of names
@@ -154,7 +160,9 @@ int main(int argc, char **argv) {
           //Check foundFlag and add to array if it is new
           if(foundFlag == 0)
           {
-            names[index++] = name;
+            names[index] = name;
+	    permbits[index] = permbit;
+	    owners[index++] = owner;
           }
         }
       }
@@ -163,12 +171,10 @@ int main(int argc, char **argv) {
         if(strcmp(names[j], "") != 0)
         {
           printf("%s\t", names[j]);
-          // printf("%s\t", name);
-          // permbits = yffs_permission(&fs, i);
-          // printf("%d\n", permbits);
+	  printf("%d\t", permbits[j]);
+	  printf("%s\n", owners[j]);
         }
       }
-      printf("\n");
   }
   
 

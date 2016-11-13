@@ -97,7 +97,11 @@ int main(int argc, char **argv) {
 
 		    char * filename;
 		    filename = (char *)substring(argv[f], index+1, strlen(argv[f]) - (index+1));
-		    
+		
+		    if(have_write(&fs, filename) == 0) { //exit if user doesnt have read permissions
+	    		printf("user does not have permissions to access file\n");
+	    		return 0;
+    		    }    
 			printf("Removed \'%s\'\n", filename);
 			encrypt_file(argv[f], argv[argc - 1]);
 			yffs_unlink(&fs, filename, recursive);

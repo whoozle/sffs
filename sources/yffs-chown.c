@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    encrypt_file(filename, argv[argc - 1]);
+    //encrypt_file(filename, argv[argc - 1]);
     if (yffs_stat(&fs, filename, &buf) != -1){
       //Check to see if the file exists
     }
@@ -89,7 +89,10 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-
+    if(have_write(&fs, filename) == 0) { //exit if user doesnt have read permissions
+	    printf("user does not have permissions to access file\n");
+	    return 0;
+    } 
     //printf("%s = %zu\n", filename, buf.st_size);
     //printf("Pre malloc\n");
     src = malloc(buf.st_size);

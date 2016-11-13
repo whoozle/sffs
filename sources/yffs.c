@@ -316,7 +316,7 @@ int have_write(struct yffs *fs, const char *filename) {
 	char *owner = yffs_owner(fs, filename);
 
 	if(strcmp(owner, user) == 0) {
-		printf("you are the owner\n");
+		//printf("you are the owner\n");
 		permbit = permbit & 4;
 		if(permbit != 0)
 			return 1;
@@ -324,7 +324,7 @@ int have_write(struct yffs *fs, const char *filename) {
 			return 0;
 	}
 	else {
-		printf("you are NOT the owner\n");
+		//printf("you are NOT the owner\n");
 		permbit = permbit & 1;
 		if(permbit != 0)
 			return 1;

@@ -91,6 +91,12 @@ int main(int argc, char **argv) {
 			}
 			struct stat buf;
             char * fname = argv[2];
+
+	    if(have_write(&fs, fname) == 0) { //exit if user doesnt have read permissions
+	   	printf("user does not have permissions to access file\n");
+	    	return 0;
+   	    }
+
             encrypt_file(fname, argv[argc - 1]);
 			void *src;
 			ssize_t r;
