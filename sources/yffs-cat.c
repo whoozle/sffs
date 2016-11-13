@@ -68,11 +68,15 @@ int main(int argc, char **argv) {
 
   //READ FROM FILESYSTEM	
   int f;
+  int mode = 0;
+  if (argv[argc - 1][0] == '-') {
+        mode = argv[argc - 1][1] - 48;
+  }
 
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
 
-  for(f = 2; f < argc; ++f) {
+  for(f = 2; f < 3; ++f) {
     struct stat buf;
     char *fname = argv[f];
     void *src;
@@ -97,7 +101,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    encrypt_file(filename, argv[argc - 1]);
+    encrypt_file(filename, mode);
     if (yffs_stat(&fs, filename, &buf) != -1){
       //Check to see if the file exists
     }

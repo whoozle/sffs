@@ -60,6 +60,10 @@ static int mount_image(struct yffs *fs, const char *fname) {
 int main(int argc, char **argv) {
 	struct yffs fs;
 	pthread_mutex_init(&mutex, NULL);
+    int mode = 0;
+  if (argv[argc - 1][0] == '-') {
+        mode = argv[argc - 1][1] - 48;
+  }
 
 	if (argc < 4) {
 		printf("Usage:\n\n"
@@ -91,7 +95,7 @@ int main(int argc, char **argv) {
 			}
 			struct stat buf;
             char * fname = argv[2];
-            encrypt_file(fname, argv[argc - 1]);
+            encrypt_file(fname, mode);
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
@@ -105,26 +109,21 @@ int main(int argc, char **argv) {
 		    int index = strlstchar(fname, '/');
 		    char * directory = (char*)substring(fname, 0, index+1);
 		    if(index == -1){
-		      printf("No folder given\n");
 		      char * buff = "/";
-		      printf("Strlen is %d\n", 1);
 		      directory = buff;
 		      dir_len = 1;
 		    }
 		    else{
 		      dir_len = strlen(directory);
 		    }
-		    printf("Dir is %s\n", directory);
 
 		    // //Set the name into file
 		    // file->name = (char *)malloc((strlen(fname) - (index+1)) *sizeof(char));
 		    char * filename;
 		    filename = (char *)substring(fname, index+1, strlen(fname) - (index+1));
 
-		    printf("File is %s\n", filename);
 
 		    fname_len = strlen(filename);
-		    printf("%s %s\n", directory, filename);
 
 			r = yffs_read(&fs, directory, fname, src, buf.st_size);
 			//**decrypt somewhere around here**
@@ -132,7 +131,7 @@ int main(int argc, char **argv) {
 			free(src);
 		}
 		
-		if (argc > 4) {
+		if (argc > 5) {
 			int i; 
 			for (i = 3; i < argc; i++) {
 			}
