@@ -5,6 +5,7 @@
 
 static int fd;
 static pthread_mutex_t mutex;
+int mode = 0;
 static ssize_t fs_write_func(const void *ptr, size_t size) {
 	pthread_mutex_lock(&mutex);
 	int wr = write(fd, ptr, size);
@@ -45,6 +46,10 @@ int main(int argc, char **argv) {
     printf("Usage: yffs-add fs.img filename folder\n");
     return 0;
   }
+
+  if (argv[argc - 1][0] == '-') {
+        mode = argv[argc - 1][1] - 48;
+  }
   
   fs.write = fs_write_func;
   fs.read = fs_read_func;
@@ -59,7 +64,7 @@ int main(int argc, char **argv) {
   void *src_data = 0;
   char * filename = strdup(argv[2]);
   src_fd = open(filename, O_RDONLY);
-  encrypt_file(filename, argv[argc - 1]);
+  encrypt_file(filename, mode);
   if (src_fd == -1) {
     //printf("file doesnt exist, creating it...\n");
     if((src_fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC)) == -1)
@@ -100,16 +105,6 @@ int main(int argc, char **argv) {
     return 1;
   }
   
-  if( argc == 4 ){
-	  	printf("Writing file %s to folder %s\n", filename, argv[3]);
-      //Check if folder exists
-      //if()
-      //Add file into folder
-
-
-  } else { // argc == 3 
-//	printf("Writing file %s\n", filename);   
-  }  
   if (yffs_write(&fs, filename, src_data, src_size) == -1)
     goto next;
 #if 0

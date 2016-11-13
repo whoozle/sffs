@@ -75,6 +75,10 @@ int main(int argc, char **argv) {
   char permbit;
   size_t i, total, max;
   size_t j;
+  int mode = 0;
+  if (argv[argc - 1][0] == '-') {
+        mode = argv[argc - 1][1] - 48;
+  }
 
   if (mount_image(&fs, argv[1]) == -1)
     return 2;
@@ -94,16 +98,16 @@ int main(int argc, char **argv) {
     names[i] = (char *)malloc(128 * sizeof(char));
   }
 
-  if (argc > 2)
+  if (0)
   {
     //Loop through all of the arguments and list out folders
-    for(i = 2; i < argc; i++)
+    for(i = 3; i < argc; i++)
     {
       //printf("%s\n", argv[i]);
       //List out the contents in each folder
-      encrypt_file(argv[i], argv[argc - 1]);
-      for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
-        decrypt_file(name, argv[argc - 1]);
+      encrypt_file(argv[i], mode);
+      for(j = 0; (name = yffs_filename(&fs, j, '/')) != 0; ++j){
+        decrypt_file(name, mode);
         printf("name: %s\n", name);
         if(strcmp(name, "") != 0){
           //Insert into array of names
@@ -144,7 +148,7 @@ int main(int argc, char **argv) {
       */
       owner = yffs_owner(&fs, name);
       permbit = yffs_permission(&fs, name);
-      decrypt_file(name, argv[argc - 1]);
+      decrypt_file(name, mode);
       if(strcmp(name, "") != 0){
           //Insert into array of names
           int k, foundFlag = 0;
