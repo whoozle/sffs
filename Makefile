@@ -1,6 +1,6 @@
 CFLAGS= -DLOG_STUBS -Wall -pedantic -ggdb -std=gnu9x -w  
 
-all: 	yffs-ls yffs-cat yffs-create yffs-rm yffs-edit yffs-add yffs-chown oclean
+all: 	yffs-ls yffs-cat yffs-create yffs-rm yffs-edit yffs-add yffs-chown yffs-chmod oclean
 
 yffs-ls: sources/yffs.o sources/yffs-ls.o
 	@mkdir -p bin
@@ -24,11 +24,13 @@ yffs-add: sources/yffs.o sources/yffs-add.o
 yffs-chown: sources/yffs.o sources/yffs-chown.o
 	@$(CC) -o bin/yffs-chown $^	
 
+yffs-chmod: sources/yffs.o sources/yffs-chmod.o
+	@$(CC) -o bin/yffs-chmod $^	
 
 
 # Use install command to send binarys to /usr/local/bin
 # Requires SU
-install: yffs-ls yffs-cat yffs-create yffs-add yffs-rm yffs-edit yffs-chown
+install: yffs-ls yffs-cat yffs-create yffs-add yffs-rm yffs-edit yffs-chown yffs-chmod
 	@mv bin/yffs-ls /usr/local/bin
 	@mv bin/yffs-cat /usr/local/bin
 	@mv bin/yffs-create /usr/local/bin
@@ -36,6 +38,7 @@ install: yffs-ls yffs-cat yffs-create yffs-add yffs-rm yffs-edit yffs-chown
 	@mv bin/yffs-edit /usr/local/bin
 	@mv bin/yffs-add /usr/local/bin
 	@mv bin/yffs-chown /usr/local/bin
+	@mv bin/yffs-chmod /usr/local/bin
 	@rm -f sources/*.o
 
 clean:
@@ -54,3 +57,4 @@ uninstall:
 	@rm -f /usr/local/bin/yffs-add
 	@rm -f /usr/local/bin/yffs-edit
 	@rm -f /usr/local/bin/yffs-chown
+	@rm -f /usr/local/bit/yffs-chmod

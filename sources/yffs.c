@@ -140,7 +140,7 @@ static int yffs_write_at(struct yffs *fs, off_t offset, const void *data, size_t
 	return 0;
 }
 
-static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_t flags, uint8_t fname_len, uint8_t dir_len, uint8_t owner_len, uint8_t padding) {
+static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_t flags, uint8_t fname_len, uint8_t dir_len, uint8_t owner_len, uint8_t padding, char perm) {
 	uint8_t header[10], header_offset;
 	uint8_t header2[4 + 1 + 1]; /*timestamp + dir_len + filename len */ //NOTICE: i did not do anything for owner_len here
 
@@ -175,7 +175,7 @@ static int yffs_write_metadata(struct yffs *fs, struct yffs_block *block, uint8_
 	header2[2] = owner_len;
 	header2[4] = dir_len;
 	header2[5] = fname_len;
-	header2[3] = 14;
+	header2[3] = perm;
 
 	if (yffs_write_at(fs, block->begin + 10, header2, 6) == -1)
 		return -1;
@@ -253,7 +253,7 @@ static int yffs_compact(struct yffs *fs) {
 		if (free[i].end == free[j].begin) {
 			free[i].end = free[j].end;
 			free[i].mtime = free[i].mtime > free[j].mtime? free[i].mtime: free[j].mtime;
-			if (yffs_write_metadata(fs, free + i, 0, 0, 0, 0, 0) == -1)
+			if (yffs_write_metadata(fs, free + i, 0, 0, 0, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, free + i) == -1)
 				return -1;
@@ -343,7 +343,7 @@ int have_read(struct yffs *fs, const char *filename) {
 	char *owner = yffs_owner(fs, filename);
 
 	if(strcmp(owner, user) == 0) {
-		printf("you are the owner\n");
+		//printf("you are the owner\n");
 		permbit = permbit & 8;
 		if(permbit != 0)
 			return 1;
@@ -351,7 +351,7 @@ int have_read(struct yffs *fs, const char *filename) {
 			return 0;
 	}
 	else {
-		printf("you are NOT the owner\n");
+		//printf("you are NOT the owner\n");
 		permbit = permbit & 2;
 		if(permbit != 0)
 			return 1;
@@ -373,7 +373,7 @@ static int yffs_recover_and_remove_old_files(struct yffs *fs) {
 		if (strcmp(file->name, files[j].name) == 0) {
 			file->block.mtime = timestamp;
 			LOG_ERROR(("yffs: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
-			if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0, 0) == -1)
+			if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0, 0, 0) == -1)
 				return -1;
 			if (yffs_commit_metadata(fs, &file->block) == -1)
 				return -1;
@@ -401,7 +401,7 @@ static int yffs_unlink_at(struct yffs *fs, size_t pos, int recursive) {
 	// LOG_DEBUG(("yffs: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
 
 	file->block.mtime = (uint32_t)time(0);
-	if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0, 0) == -1)
+	if (yffs_write_metadata(fs, &file->block, 0, 0, 0, 0, 0, 0) == -1)
 		return -1;
 	if (yffs_commit_metadata(fs, &file->block) == -1)
 		return -1;
@@ -565,7 +565,7 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len + owner_len, data, size) == -1)
 		return -1;
 	/*writing metadata*/
-	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, owner_len, padding) == -1)
+	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, owner_len, padding, 14) == -1)
 		return -1;
 	/*write owner*/ 
 	if(fs->write(file->owner, owner_len) != owner_len)
@@ -595,6 +595,129 @@ ssize_t yffs_write(struct yffs *fs, const char *fname, const void *data, size_t 
 	}
 	return size;
 }
+
+//same as write, but with defined permissions
+ssize_t yffs_write_perm(struct yffs *fs, const char *fname, const void *data, size_t size, char perm) {
+
+	//Get the file without any slashes
+	int index = strlstchar(fname, '/');
+
+	size_t fname_len, dir_len, owner_len, best_size, full_size, tail_size;
+	struct yffs_entry *file;
+	long remove_me;
+	struct yffs_block *best_free;
+	off_t offset;
+	uint8_t padding;
+
+	long pos = yffs_find_file(fs, fname);
+	if (pos < 0) {
+		remove_me = -1;
+		pos = -pos - 1;
+	} else {
+		remove_me = pos + 1;
+		//LOG_ERROR(("yffs: old file in position %ld", remove_me));
+	}
+	file = (struct yffs_entry *)yffs_vector_insert(&fs->files, pos, sizeof(struct yffs_entry));
+	if (!file) {
+		//LOG_ERROR(("yffs: inserting file struct failed!"));
+		return -1;
+	}
+	/*//LOG_DEBUG(("file[pos] = %s, file[pos + 1] = %s", ((struct yffs_entry *)fs->files.ptr)[pos].name, ((struct yffs_entry *)fs->files.ptr)[pos + 1].name));*/
+	//printf("Pre substring\n");
+	//Insert the rest of the directory into dir attribute in yffs_entry
+	char * directory = (char*)substring(fname, 0, index+1);
+	if(index == -1){
+		//printf("No folder given\n");
+		char * buff = "/";
+		//printf("Strlen is %d\n", 1);
+		file->dir = (char *)malloc(1 * sizeof(char));
+		file->dir = buff;
+		dir_len = 1;
+	}
+	else{
+		file->dir = (char *)malloc(strlen(directory) * sizeof(char));
+		file->dir = directory;
+		dir_len = strlen(directory);
+	}
+	//printf("Dir is %s\n", directory);
+	//printf("Set to %s\n", file->dir);
+
+	//Set the name into file
+	file->name = (char *)malloc((strlen(fname) - (index+1)) *sizeof(char));
+	file->name = (char *)substring(fname, index+1, strlen(fname) - (index+1));
+
+	//printf("File is %s\n", file->name);
+
+	fname_len = strlen(file->name);
+
+	file->owner = yffs_owner(fs, file->name);
+	//file->permBits = 14; //"rwr-" as default permissions settings
+	owner_len = strlen(file->owner);
+
+	full_size = yffs_HEADER_SIZE + dir_len + owner_len + fname_len + size;
+	best_free = find_best_free(fs, full_size);
+	if (!best_free) {
+		LOG_ERROR(("yffs: no space left on device"));
+		return -1;
+	}
+
+	best_size = best_free->end - best_free->begin;
+	tail_size = best_size - full_size;
+	offset = best_free->begin;
+	if (tail_size > yffs_HEADER_SIZE) {
+		/*mark up empty block inside*/
+		best_free->begin = offset + full_size;
+		if (yffs_write_empty_header(fs, best_free) == -1) 
+			return -1;
+		padding = 0;
+	} else {
+		/* tail_size == yffs_HEADER_SIZE or less */
+		padding = tail_size;
+		full_size += padding;
+		yffs_vector_remove(&fs->free, best_free - (struct yffs_block *)fs->free.ptr, sizeof(struct yffs_block));
+	}
+	//LOG_ERROR(("yffs: creating file in position %ld -> 0x%lx", pos, (unsigned long)offset));
+	file->block.begin = offset;
+	file->block.end = offset + full_size;
+	file->block.mtime = (uint32_t)time(0);
+	file->padding = padding;
+	file->size = size;
+
+	/*writing data*/
+	if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len + owner_len, data, size) == -1)
+		return -1;
+	/*writing metadata*/
+	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, owner_len, padding, perm) == -1)
+		return -1;
+	/*write owner*/ 
+	if(fs->write(file->owner, owner_len) != owner_len)
+	{
+		//LOG_ERROR(("yffs: error writing owner (len: %zu)", dir_len));
+		return -1;
+	}
+	
+	/*write dirname*/
+	if(fs->write(file->dir, dir_len) != dir_len)
+	{
+		//LOG_ERROR(("yffs: error writing directory (len: %zu)", dir_len));
+		return -1;
+	}
+	/*write filename*/
+	if (fs->write(file->name, fname_len) != fname_len) {
+		//LOG_ERROR(("yffs: error writing filename (len: %zu)", fname_len));
+		return -1;
+	}
+	/*commit*/
+	if (yffs_commit_metadata(fs, &file->block) == -1)
+		return -1;
+
+	if (remove_me >= 0) {
+		/*removing old copy*/
+		yffs_unlink_at(fs, remove_me, 0);
+	}
+	return size;
+}
+
 
 //same as yffs_write with the owner specified
 ssize_t yffs_write_own(struct yffs *fs, const char *fname, const void *data, size_t size, char *owner) {
@@ -691,7 +814,7 @@ ssize_t yffs_write_own(struct yffs *fs, const char *fname, const void *data, siz
 	if (yffs_write_at(fs, offset + yffs_HEADER_SIZE + fname_len + dir_len + owner_len, data, size) == -1)
 		return -1;
 	/*writing metadata*/
-	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, owner_len, padding) == -1)
+	if (yffs_write_metadata(fs, &file->block, 0x40, fname_len, dir_len, owner_len, padding, yffs_permission(fs, fname)) == -1)
 		return -1;
 	/*write owner*/ 
 	if(fs->write(file->owner, owner_len) != owner_len)
