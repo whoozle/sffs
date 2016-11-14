@@ -1,0 +1,25 @@
+.TH yffs-edit 1
+.SH NAME
+yffs-edit \-   edit the contents of a file in the yffs filesystem
+.SH SYNOPSIS
+.B yffs-edit
+[ filesystem ] [ original file ] [ file to append ]
+.SH DESCRIPTION
+.I  yffs-edit
+appends the contents of a file currently on the drive to a file stored in the filesystem. The file that is stored on the drive will still remain on the drive in its original state after the edit operation. No output will be produced for a successful edit.
+.SH EXAMPLE 
+.TP
+yffs-edit example.img destination.txt source.txt
+Will write the contents of source.txt to destination.txt in the filesystem stored in example.img.
+.SH "SEE ALSO"
+yffs(1), yffs-add(1), yffs-cat(1), yffs-create(1), yffs-ls(1), yffs-rm(1), yffs-chmod(1), yffs-chown(1)
+.SH BUGS
+Please report any yffs bugs to bvervaet@purdue.edu
+.SH AUTHORS
+Written by Wyatt Dahlenburg, Zach Kent, Max Molnar, Sam Spencer, and Brian VerVaet
+.SH COPYRIGHT
+Copyright \(co 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

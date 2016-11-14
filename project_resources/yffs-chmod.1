@@ -1,0 +1,25 @@
+.TH yffs-chmod 1
+.SH NAME
+yffs-chmod \-   modify the permissions of a file in the filesystem
+.SH SYNOPSIS
+.B yffs-chmod
+[ filesystem ] [ file ] [ permission ] 
+.SH DESCRIPTION
+.I  yffs-chmod
+will access the permission bit stored in a file's yffs header and edit the bit accordingly. The argument to be passed to yffs-chmod must be an integer argument, yffs-chmod does not accept string arguments or other values like chmod can.
+.SH EXAMPLE
+.TP
+yffs-chmod example hello.txt 14 
+changes the permission bit of hello.txt to 14. No output is printed when the bit is successfully changed.
+.SH "SEE ALSO"
+yffs(1), yffs-add(1), yffs-cat(1), yffs-create(1), yffs-edit(1), yffs-ls(1), yffs-rm(1), yffs-chown(1)
+.SH BUGS
+Please report any yffs bugs to bvervaet@purdue.edu
+.SH AUTHORS
+Written by Wyatt Dahlenburg, Zach Kent, Max Molnar, Sam Spencer, and Brian VerVaet
+.SH COPYRIGHT
+Copyright \(co 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

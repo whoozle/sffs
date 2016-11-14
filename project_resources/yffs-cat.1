@@ -1,0 +1,25 @@
+.TH yffs-cat 1
+.SH NAME
+yffs-cat \-   concatenates a file stored in a yffs filesystem and prints it to standard output
+.SH SYNOPSIS
+.B yffs-cat
+[ filesystem.img ] [ file ]
+.SH DESCRIPTION
+.I  yffs-cat
+concatenates a file stored in the yffs filesystem and prints to standard output. yffs-cat functions essentially the same as the Linux 'cat' command without the implementation for concantenating standard input as well. 
+.SH EXAMPLE
+.TP
+yffs-cat example hello.txt
+Will print the contents of the file hello.txt stored in the filesystem 'example' to standard output.
+.SH "SEE ALSO"
+yffs(1), yffs-add(1), yffs-create(1), yffs-edit(1), yffs-ls(1), yffs-rm(1), yffs-chmod(1), yffs-chown(1)
+.SH BUGS
+Please report any yffs bugs to bvervaet@purdue.edu
+.SH AUTHORS
+Written by Wyatt Dahlenburg, Zach Kent, Max Molnar, Sam Spencer, and Brian VerVaet
+.SH COPYRIGHT
+Copyright \(co 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

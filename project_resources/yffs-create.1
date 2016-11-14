@@ -1,0 +1,21 @@
+.TH yffs-create 1
+.SH NAME
+yffs-create \-   creates the yffs filesystem
+.SH SYNOPSIS
+.B yffs-create
+[ filesystem ] [ size ]
+.SH DESCRIPTION
+.I  yffs-create
+creates a yffs filesystem as a file. The size of the file system needs to be specified in the second argument passed and must be greater than 16b (the size of a yffs header). This file should be able function as a mounted drive on any Linux device. No output will be printed upon successfully creating the filesystem.
+.SH "SEE ALSO"
+yffs(1), yffs-add(1), yffs-cat(1), yffs-edit(1), yffs-ls(1), yffs-rm(1), yffs-chmod(1), yffs-chown(1)
+.SH BUGS
+Please report any yffs bugs to bvervaet@purdue.edu
+.SH AUTHORS
+Written by Wyatt Dahlenburg, Zach Kent, Max Molnar, Sam Spencer, and Brian VerVaet
+.SH COPYRIGHT
+Copyright \(co 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

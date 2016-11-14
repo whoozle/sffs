@@ -1,0 +1,25 @@
+.TH yffs-rm 1
+.SH NAME
+yffs-rm \-   removes a file from the yffs filesystem
+.SH SYNOPSIS
+.B yffs-rm
+[ filesystem.img ] [ file ]
+.SH DESCRIPTION
+.I  yffs-rm
+removes a specified file from the yffs filesystem. The remaining files will be properly linked together and the memory is freed for reuse within the filesystem.
+.SH EXAMPLE
+.TP 
+yffs-rm example a.txt
+will remove a.txt from the filesystem stored in example. Will print "Removed 'a.txt'" if the operation was successful.
+.SH "SEE ALSO"
+yffs(1), yffs-add(1), yffs-cat(1), yffs-create(1), yffs-edit(1), yffs-ls(1), yffs-chmod(1), yffs-chown(1)
+.SH BUGS
+Please report any yffs bugs to bvervaet@purdue.edu
+.SH AUTHORS
+Written by Wyatt Dahlenburg, Zach Kent, Max Molnar, Sam Spencer, and Brian VerVaet
+.SH COPYRIGHT
+Copyright \(co 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

@@ -1,0 +1,31 @@
+.TH yffs-add 1
+.SH NAME
+yffs-add \-   add a file into the yffs filesystem
+.SH SYNOPSIS
+.B yffs-add
+[ filesystem ] [ file ] [ folder ] [ -1 ]
+.SH DESCRIPTION
+.I  yffs-add
+adds a file currently on the drive into the filesystem image. If a folder is specified the file will be added to that folder. The -1 flag denotes whether the filename will be obfuscated or not.
+.SH OPTIONS 
+.B -1 
+\- denotes the filename should be obfuscated
+.SH EXAMPLE
+.TP
+yffs-add example.img hello.txt 
+adds hello.txt to the filesystem at example.img. No output is printed for a successful add operation.
+.TP
+yffs-add example.img hello.txt folder1  
+adds hello.txt to folder1
+.SH "SEE ALSO"
+yffs(1), yffs-cat(1), yffs-create(1), yffs-edit(1), yffs-ls(1), yffs-rm(1), yffs-chmod(1), yffs-chown(1)
+.SH BUGS
+Please report any yffs bugs to bvervaet@purdue.edu
+.SH AUTHORS
+Written by Wyatt Dahlenburg, Zach Kent, Max Molnar, Sam Spencer, and Brian VerVaet
+.SH COPYRIGHT
+Copyright \(co 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
