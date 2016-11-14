@@ -31,14 +31,23 @@ yffs-chmod: sources/yffs.o sources/yffs-chmod.o
 # Use install command to send binarys to /usr/local/bin
 # Requires SU
 install: yffs-ls yffs-cat yffs-create yffs-add yffs-rm yffs-edit yffs-chown yffs-chmod
-	@mv bin/yffs-ls /usr/local/bin
-	@mv bin/yffs-cat /usr/local/bin
-	@mv bin/yffs-create /usr/local/bin
-	@mv bin/yffs-rm /usr/local/bin
-	@mv bin/yffs-edit /usr/local/bin
-	@mv bin/yffs-add /usr/local/bin
-	@mv bin/yffs-chown /usr/local/bin
-	@mv bin/yffs-chmod /usr/local/bin
+	@cp bin/yffs-ls /usr/local/bin
+	@cp bin/yffs-cat /usr/local/bin
+	@cp bin/yffs-create /usr/local/bin
+	@cp bin/yffs-rm /usr/local/bin
+	@cp bin/yffs-edit /usr/local/bin
+	@cp bin/yffs-add /usr/local/bin
+	@cp bin/yffs-chown /usr/local/bin
+	@cp bin/yffs-chmod /usr/local/bin
+	@cp project_resources/mans/yffs.1 /usr/share/man/man1/
+	@cp project_resources/mans/yffs-cat.1 /usr/share/man/man1/
+	@cp project_resources/mans/yffs-chown.1 /usr/share/man/man1/
+	@cp project_resources/mans/yffs-edit.1 /usr/share/man/man1/
+	@cp project_resources/mans/yffs-rm.1 /usr/share/man/man1/
+	@cp project_resources/mans/yffs-add.1 /usr/share/man/man1/
+	@cp project_resources/mans/yffs-chmod.1 /usr/share/man/man1/
+	@cp project_resources/mans/yffs-create.1 /usr/share/man/man1/
+	@cp project_resources/mans/yffs-ls.1 /usr/share/man/man1/
 	@rm -f sources/*.o
 
 clean:
