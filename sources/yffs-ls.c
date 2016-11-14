@@ -98,17 +98,17 @@ int main(int argc, char **argv) {
     names[i] = (char *)malloc(128 * sizeof(char));
   }
 
-  if (argc > 2 && mode == 0)
+  if (argc > 2)
   {
     //Loop through all of the arguments and list out folders
-    for(i = 3; i < argc; i++)
+    for(i = 2; i < argc; i++)
     {
       //printf("%s\n", argv[i]);
       //List out the contents in each folder
       encrypt_file(argv[i], mode);
-      for(j = 0; (name = yffs_filename(&fs, j, '/')) != 0; ++j){
+      for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
         decrypt_file(name, mode);
-        printf("name: %s\n", name);
+      //  printf("name: %s\n", name);
         if(strcmp(name, "") != 0){
           //Insert into array of names
           int k, foundFlag = 0;
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
           }
         }
       }
-    printf("\n");
+    //printf("\n");
     for(j = 0; j < length ; j++)
     {
 	    if(strcmp(names[j], "") != 0)
