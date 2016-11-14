@@ -115,7 +115,7 @@ if [ ${#var} -eq 0 ]; then
 	printf "Before CHOWN\n"
 	python -c 'print "*"*25'
 
-  ../../bin/yffs-ls iso.img | head -n4 | tail -n3; echo; echo;
+  ../../bin/yffs-ls iso.img | head -n4 | tail -n4; echo; echo;
   ../../bin/yffs-chown iso.img File0.txt UserA
   ../../bin/yffs-chown iso.img File10.txt UserB
 	
@@ -123,7 +123,7 @@ if [ ${#var} -eq 0 ]; then
 	printf "After CHOWN\n"
 	python -c 'print "*"*25'
   
-  ../../bin/yffs-ls iso.img | head -n4 | tail -n3; echo; echo;
+  ../../bin/yffs-ls iso.img | head -n4 | tail -n4; echo; echo;
 fi
 printf "\nEditing File Permissions "
 read -p "[Enter]" var
