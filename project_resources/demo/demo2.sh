@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python -c 'print "*"*50'
-printf "Demo for CS307 at Purdue University.\n\nPress enter to iterate through the steps\n"
+printf "Demo2 for CS307 at Purdue University.\n\nPress enter to iterate through the steps\n"
 python -c 'print "*"*50'
 
 printf "\n"
@@ -162,13 +162,13 @@ printf "Printing Folder Contents\n"
 python -c 'print "*"*25'
 read -p "[Enter]"
 if [ ${#var} -eq 0 ]; then
-  ../../bin/yffs-ls iso.img FolderB; echo; echo;
+  #../../bin/yffs-ls iso.img FolderB; echo; echo;
   echo -n "GpmefsB0UftuGjmfB -> ";ls Folder*
 fi
 
 	echo;echo;
 	python -c 'print "*"*25'
-	printf "Demo completed (Cleaning up)\n"
+	printf "Demo completed\n"
 	python -c 'print "*"*25'
 	echo;
 read -p "[Enter to clean and end]"
