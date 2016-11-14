@@ -171,6 +171,7 @@ fi
 	printf "Demo completed (Cleaning up)\n"
 	python -c 'print "*"*25'
 	echo;
+read -p "[Enter to clean and end]"
 rm iso.img
 rm File*
 rm -rf *Folder*
