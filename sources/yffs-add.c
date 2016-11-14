@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
  next:
   free(src_data);
   close(src_fd);
-  remove(filename);
+  //remove(filename);
 		
   //printf("unmounting...\n");
   yffs_umount(&fs);

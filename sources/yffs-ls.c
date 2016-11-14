@@ -170,18 +170,28 @@ int main(int argc, char **argv) {
           }
         }
       }
-      for(j = 0; j < length; j++)
-      {
-        if(strcmp(names[j], "") != 0)
-        {
-          printf("%s\t", names[j]);
-	  if (strchr(names[j], '/') == NULL) {
-	  	printf("%d\t", permbits[j]);
-	  	printf("%s", owners[j]);
-	  }
-	  printf("\n");
-        }
-      }
+    printf("\n");
+    for(j = 0; j < length ; j++)
+    {
+	    if(strcmp(names[j], "") != 0)
+	    {
+		   if(argv[2] == NULL){
+			printf("%s\t", names[j]);
+			if (strchr(names[j], '/') == NULL) {
+			    printf("%d\t", permbits[j]);
+			    printf("%s", owners[j]);
+		    	}
+		    	printf("\n");
+		    }
+		   else if(strstr(argv[2], names[j]) == 0){
+		   	char * f;
+			if (f = strchr(names[j], '/') != NULL) {
+			    if(names[j][0] == 'F')
+			    printf("%s, %s\n", argv[2], names[j]);
+		    	}
+		    }
+	    }
+    }
   }
   
 

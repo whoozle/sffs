@@ -73,7 +73,7 @@ const char* yffs_filename(struct yffs *fs, size_t index, char * directory) {
 		//printf("Ent\nDir->%s\nFile->%s\n", ent->dir, ent->name);
 
 		//If this is in the same directory print out the file
-		if(ent->dir && strcmp(ent->dir, directory) == 0 ){
+		if(ent->dir && directory && strcmp(ent->dir, directory) == 0 ){
 			//printf("Name is %s\n", ent->name);
 			return ent->name;
 		}
