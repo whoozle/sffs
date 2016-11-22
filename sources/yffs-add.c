@@ -94,8 +94,9 @@ int main(int argc, char **argv) {
     goto next;
   }
   close(src_fd);
-
-
+	
+//!!Data to write is saved in src_data, call an encryption option
+	
   struct stat buf;
   if (yffs_stat(&fs, filename, &buf) == -1){
     //Check to see if the file exists
