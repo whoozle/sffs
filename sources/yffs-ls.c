@@ -105,9 +105,9 @@ int main(int argc, char **argv) {
     {
       //printf("%s\n", argv[i]);
       //List out the contents in each folder
-      encrypt_file(argv[i], mode);
+      hash_filename(argv[i], mode);
       for(j = 0; (name = yffs_filename(&fs, j, argv[i])) != 0; ++j){
-        decrypt_file(name, mode);
+        sling_filename(name, mode);
       //  printf("name: %s\n", name);
         if(strcmp(name, "") != 0){
           //Insert into array of names
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
       */
       owner = yffs_owner(&fs, name);
       permbit = yffs_permission(&fs, name);
-      decrypt_file(name, mode);
+      sling_filename(name, mode);
       if(strcmp(name, "") != 0){
           //Insert into array of names
           int k, foundFlag = 0;

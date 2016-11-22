@@ -1080,7 +1080,45 @@ int yffs_umount(struct yffs *fs) {
 	return 0;
 }
 
-void encrypt_file(char * fname, int mode) {
+void encrypt_file1(char * ftxt, int mode) {
+        if (testing) {return;}
+        int i = 0;
+        while (ftxt[i]) {
+            if((int)ftxt[i] > 33 || (int)ftxt[i] < 124)
+				ftxt[i] = ftxt[i] + mode;
+			i++;        
+		}
+}
+
+void decrypt_file1(char * ftxt, int mode) {
+        if (testing) {return;}
+        int i = 0;
+        while (ftxt[i]) {
+     		if((int)ftxt[i] > 33 || (int)ftxt[i] < 124)
+				ftxt[i] = ftxt[i] - mode;
+			i++;        
+        }
+}
+void encrypt_file2(char * ftxt, int mode) {
+        if (testing) {return;}
+        int i = 0;
+        while (ftxt[i]) {
+            if((int)ftxt[i] > 33 || (int)ftxt[i] < 124)
+				ftxt[i] = ftxt[i] + mode;
+			i++;        
+		}
+}
+
+void decrypt_file2(char * ftxt, int mode) {
+        if (testing) {return;}
+        int i = 0;
+        while (ftxt[i]) {
+     		if((int)ftxt[i] > 33 || (int)ftxt[i] < 124)
+				ftxt[i] = ftxt[i] - mode;
+			i++;        
+        }
+}
+void hash_filename(char * fname, int mode) {
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
@@ -1090,7 +1128,7 @@ void encrypt_file(char * fname, int mode) {
 		}
 }
 
-void decrypt_file(char * fname, int mode) {
+void sling_filename(char * fname, int mode) {
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {

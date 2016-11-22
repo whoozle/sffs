@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
   void *src_data = 0;
   char * filename = strdup(argv[2]);
   src_fd = open(filename, O_RDONLY);
-  encrypt_file(filename, mode);
+  hash_filename(filename, mode);
   if (src_fd == -1) {
     //printf("file doesnt exist, creating it...\n");
     if((src_fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC)) == -1)
@@ -106,8 +106,8 @@ int main(int argc, char **argv) {
     return 1;
   }
   
-	// Encrypts file data
-  encrypt_file(src_data, mode);
+  // Encrypts file data
+  encrypt_file1(src_data, mode);
 
   if (yffs_write(&fs, filename, src_data, src_size) == -1)
     goto next;

@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    encrypt_file(filename, mode);
+    hash_filename(filename, mode);
 	
     if(have_read(&fs, filename) == 0) { //exit if user doesnt have read permissions
 	    printf("user does not have permissions to access file\n");
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 
 	//Src is encrypted
 
-	decrypt_file(src, mode);
+    decrypt_file1(src, mode);
     fwrite(src, 1, r, stdout);
     //printf("owner: %s\n", yffs_owner(&fs, filename));
     //printf("permissions: %d\n", yffs_permission(&fs, filename));

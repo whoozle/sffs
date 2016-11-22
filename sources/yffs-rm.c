@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 	    		return 0;
     		    }    
 			printf("Removed \'%s\'\n", filename);
-			encrypt_file(filename, mode);
+			hash_filename(filename, mode);
 			yffs_unlink(&fs, filename, recursive);
 		}
 	}

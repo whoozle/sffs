@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
 	    	return 0;
    	    }
 
-            encrypt_file(fname, mode);
+            hash_filename(fname, mode);
 			void *src;
 			ssize_t r;
 			yffs_stat(&fs, fname, &buf);
