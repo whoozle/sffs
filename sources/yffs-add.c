@@ -106,6 +106,9 @@ int main(int argc, char **argv) {
     return 1;
   }
   
+	// Encrypts file data
+  encrypt_file(src_data, mode);
+
   if (yffs_write(&fs, filename, src_data, src_size) == -1)
     goto next;
 #if 0

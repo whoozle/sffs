@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     }
 
     encrypt_file(filename, mode);
-
+	
     if(have_read(&fs, filename) == 0) { //exit if user doesnt have read permissions
 	    printf("user does not have permissions to access file\n");
 	    return 0;
@@ -122,15 +122,21 @@ int main(int argc, char **argv) {
     src = malloc(buf.st_size);
     if (!src)
       return 1;
+
     /*fname is filename that needs to be "decrypted"
     in reality if you encrypt_file fname the same way it'll work 
     encrypt_file(fname, n) where n is encrypt_fileion mode
     if you choose incorrect n the file will not be found 
     */
     
+
     r = yffs_read(&fs, directory, filename, src, buf.st_size);
     if (r < 0)
       return 1;
+
+	//Src is encrypted
+
+	decrypt_file(src, mode);
     fwrite(src, 1, r, stdout);
     //printf("owner: %s\n", yffs_owner(&fs, filename));
     //printf("permissions: %d\n", yffs_permission(&fs, filename));

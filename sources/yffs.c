@@ -1080,19 +1080,23 @@ int yffs_umount(struct yffs *fs) {
 	return 0;
 }
 
-void encrypt_file(char * fname, char * mode) {
+void encrypt_file(char * fname, int mode) {
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
-            fname[i] = fname[i++] + mode;
-        }
+            if((int)fname[i] > 33 || (int)fname[i] < 124)
+				fname[i] = fname[i] + mode;
+			i++;        
+		}
 }
 
-void decrypt_file(char * fname, char * mode) {
+void decrypt_file(char * fname, int mode) {
         if (testing) {return;}
         int i = 0;
         while (fname[i]) {
-            fname[i] = fname[i++] - (char) mode;
+     		if((int)fname[i] > 33 || (int)fname[i] < 124)
+				fname[i] = fname[i] - mode;
+			i++;        
         }
 }
 
