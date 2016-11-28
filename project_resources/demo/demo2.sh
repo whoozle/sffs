@@ -15,7 +15,8 @@ printf "\nInserting files into image\n"
 
 read -p "[Enter]" var
 if [ ${#var} -eq 0 ]; then
-  echo "Creating files"
+  echo "Creatin files"
+  
   for i in {0..25}
     do
      echo "File${i}" > "File${i}.txt"
