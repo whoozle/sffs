@@ -153,36 +153,6 @@ if [ ${#var} -eq 0 ]; then
   echo -n "GpmefsB0UftuGjmfB -> ";ls Folder*
 fi
 
-printf "\nAdding Encrypted Files"
-read -p "[Enter]" var
-if [ ${#var} -eq 0 ]; then
-#Encrypted Files	
-	echo;
-	
-	echo "File Contents 123" > FileA
-	echo "This is another file" > TesterQ
-	../../bin/yffs-add iso.img FileA -1
-	../../bin/yffs-add iso.img TesterQ -1
-	
-	python -c 'print "*"*25'
-	printf "After Encryption\n"
-	python -c 'print "*"*25'
-	
-  ../../bin/yffs-ls iso.img; echo; echo;
-fi
-
-printf "Reading Encrypted Files"
-read -p "[Enter]" var
-if [ ${#var} -eq 0 ]; then
-#Encrypted Files	
-	echo;
-	echo "yffs-cat iso.img FileA -1;";
-	../../bin/yffs-cat iso.img FileA -1; echo;
-	echo "yffs-cat iso.img FileB -1;";
-	 ../../bin/yffs-cat iso.img TesterQ -1; echo;
-fi
-	
-
 read -p "[Enter]" var
 if [ ${#var} -eq 0 ]; then
 #Showing fs	
@@ -199,5 +169,5 @@ fi
 	echo;
 	read -p "[Enter to clean and end]"
 	rm iso.img
-	rm File* f*sContents Tester*;
+	rm File* f*sContents;
 	rm -rf *Folder*
