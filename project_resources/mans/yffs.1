@@ -1,0 +1,51 @@
+.TH yffs 1
+.SH NAME
+yffs \-   a fault-tolerant filesystem supporting user defined encryption
+.SH SYNOPSIS
+.B [ -yffs-tool ]
+[ args... ] 
+.SH DESCRIPTION
+.I  yffs
+is a filesystem designed to be used as a secure, dependable storage medium on 
+any flash device.  YFFS provides stable storage despite power fluctuations by implementing a transaction-based file system. This 
+type of file system is designed to leave the structure of directory, files, and metadata in a sound state. Yffs accomplishes this
+by finalizing metadata with a one-bit switch, ensuring it won't lose anything. While there are transaction-based file systems 
+that accomplish the task of flash stability, no such file system exists today that also provides an interface for user-defined 
+encryption.  
+
+Source code and additional documentation available at: https://github.com/sspencer/yffs 
+.SH OPTIONS
+.TP
+.B \-yffs-add
+Add a file from the drive to the yffs filesystem image.
+.TP
+.B \-yffs-cat
+Read the contents of a specific file from the specified yffs filesystem image.
+.TP
+.B \-yffs-create
+Create a yffs filesystem image of a specified size.
+.TP
+.B \-yffs-edit
+Edit a file stored in the specified yffs filesystem image.
+.TP
+.B \-yffs-ls
+List all the files stored in the specified yffs filesystem image.
+.TP
+.B \-yffs-rm
+Remove a file from the specified yffs filesystem image.
+.B \-yffs-chmod
+Change the permissions of a file stored in the yffs filesystem image.
+.B \-yffs-chown
+Change the owner of a file stored in the yffs filesystem image.
+.SH "SEE ALSO"
+yffs-add(1), yffs-cat(1), yffs-create(1), yffs-edit(1), yffs-ls(1), yffs-rm(1), yffs-chmod(1), yffs-chown(1)
+.SH BUGS 
+Please report any yffs bugs to bvervaet@purdue.edu
+.SH AUTHORS
+Written by Wyatt Dahlenburg, Zach Kent, Max Molnar, Sam Spencer, and Brian VerVaet
+.SH COPYRIGHT
+Copyright \(co 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

@@ -1,0 +1,6 @@
+permissions setup:
+each file has an owner and a permissions byte
+last two bits of the permissions byte specify read and write permissions of users that are not the owner, and the 2 bits before those specify read and write permissions of the owner 
+Default permissions (14):
+****rwr-
+meaning that the owner can read and write to the file, but any other user can only read it

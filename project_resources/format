@@ -10,13 +10,12 @@ transaction-id: id (first bit of first flag)
 	flags[1]: 0x80 - INDEX(only for first entry), COMMITTED = 0x40	
 	size[4], 
 ][2]
-0x0a:
-mtime[4]
-0x0e:
-padding[1]
-0x0f:
-filename_len[1], 
-0x10:
-filename
+0x0a: mtime[4]
+0x0b: encryptflag
+0x0c: owner_len
+0x0d: permbyte
+0x0e: dir_len[1]
+0x0f: filename_len[1], 
+0x10: filename
 data[... + padding]
 ]

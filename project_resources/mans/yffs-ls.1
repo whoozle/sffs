@@ -1,0 +1,24 @@
+.TH yffs-ls 1
+.SH NAME
+yffs-ls \-   lists all the files stored the yffs filesystem
+.SH SYNOPSIS
+.B yffs-ls
+[ filesystem ] [ -1 ] 
+.SH DESCRIPTION
+.I  yffs-ls
+lists the files currently in the specified yffs filesystem. The format for printing to standard output is "filename" "permissions" "owner". 
+.SH OPTIONs
+.B -1 
+\- denotes filenames and file content need to be decrypted via Caesar cipher 
+.SH "SEE ALSO"
+yffs(1), yffs-add(1), yffs-cat(1), yffs-create(1), yffs-edit(1), yffs-rm(1), yffs-chmod(1), yffs-chown(1)
+.SH BUGS
+Please report any yffs bugs to bvervaet@purdue.edu
+.SH AUTHORS
+Written by Wyatt Dahlenburg, Zach Kent, Max Molnar, Sam Spencer, and Brian VerVaet
+.SH COPYRIGHT
+Copyright \(co 2016 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
