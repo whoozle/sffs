@@ -7,6 +7,9 @@ yffs-cat \-   concatenates a file stored in a yffs filesystem and prints it to s
 .SH DESCRIPTION
 .I  yffs-cat
 concatenates a file stored in the yffs filesystem and prints to standard output. yffs-cat functions essentially the same as the Linux 'cat' command without the implementation for concantenating standard input as well. 
+.SH OPTIONS
+.B -1
+\- denotes the file contents should be decrypted via Caesar cipher before viewing 
 .SH EXAMPLE
 .TP
 yffs-cat example hello.txt

@@ -5,14 +5,14 @@ yffs-chown \-   modify the owner of a file in the filesystem
 .B yffs-chown
 [ filesystem ] [ file ] [ user ] 
 .SH DESCRIPTION
-.I  yffs-owner
+.I  yffs-chown
 will access the owner variable of a file stored in the filesystem and update the user specified as the owner if permissions allow it.
 .SH EXAMPLE
 .TP
 yffs-chown example hello.txt vlad 
 changes the owner of hello.txt to the user with username vlad. No output is printed when the owner is successfully changed.
 .SH "SEE ALSO"
-yffs(1), yffs-add(1), yffs-cat(1), yffs-create(1), yffs-edit(1), yffs-ls(1), yffs-rm(1), yffs-chown(1)
+yffs(1), yffs-add(1), yffs-cat(1), yffs-create(1), yffs-edit(1), yffs-ls(1), yffs-rm(1), yffs-chmod(1)
 .SH BUGS
 Please report any yffs bugs to bvervaet@purdue.edu
 .SH AUTHORS

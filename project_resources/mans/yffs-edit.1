@@ -6,7 +6,9 @@ yffs-edit \-   edit the contents of a file in the yffs filesystem
 [ filesystem ] [ original file ] [ file to append ]
 .SH DESCRIPTION
 .I  yffs-edit
-appends the contents of a file currently on the drive to a file stored in the filesystem. The file that is stored on the drive will still remain on the drive in its original state after the edit operation. No output will be produced for a successful edit.
+appends the contents of a file currently on the drive to a file stored in the filesystem. The file that is stored on the drive will still remain on the drive in its original state after the edit operation. No output will be produced for a successful edit..SH OPTIONS
+.B -1
+\- denotes the file contents should be encrypted via Caesar cipher once edited properly 
 .SH EXAMPLE 
 .TP
 yffs-edit example.img destination.txt source.txt
