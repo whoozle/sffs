@@ -55,13 +55,17 @@ static uint8_t *sffs_vector_insert(struct sffs_vector *vec, size_t pos, size_t s
 
 static int sffs_vector_remove(struct sffs_vector *vec, size_t pos, size_t size) {
 	uint8_t *p;
+	size_t new_size = vec->size - size;
 
 	pos *= size;
 	memmove(vec->ptr + pos, vec->ptr + pos + size, vec->size - pos - size);
-	p = (uint8_t *)realloc(vec->ptr, vec->size - size);
-	if (p)
-		vec->ptr = p;
-	vec->size -= size;
+	p = (uint8_t *)realloc(vec->ptr, new_size);
+	if (!p && new_size) {
+		LOG_ERROR(("SFFS: realloc(%p, %zu) failed", vec->ptr, new_size));
+		return -1;
+	}
+	vec->ptr = p;
+	vec->size = new_size;
 	return 0;
 }
 
