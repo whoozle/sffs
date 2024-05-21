@@ -578,9 +578,15 @@ error:
 	return -1;
 }
 
-
+static void sffs_free_file_names(struct sffs *fs) {
+	struct sffs_entry *files = (struct sffs_entry *)fs->files.ptr;
+	unsigned int i = 0;
+	for(; i < fs->files.size / sizeof(struct sffs_entry); ++i)
+		free(files[i].name);
+}
 
 int sffs_umount(struct sffs *fs) {
+	sffs_free_file_names(fs);
 	free(fs->files.ptr);
 	fs->files.ptr = 0;
 	fs->files.size = 0;
