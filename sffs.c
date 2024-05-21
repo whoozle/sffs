@@ -508,8 +508,10 @@ int sffs_mount(struct sffs *fs) {
 			size_t file_offset = fs->files.size;
 			uint8_t filename_len = header[15], padding = header[14];
 
-			if (filename_len == 0 || filename_len == 0xff)
-				break;
+			if (filename_len == 0 || filename_len == 0xff) {
+				LOG_ERROR(("SFFS: empty filename"));
+				goto error;
+			}
 		
 			if (sffs_vector_resize(&fs->files, file_offset + sizeof(struct sffs_entry)) == -1)
 				goto error;
