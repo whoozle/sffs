@@ -112,7 +112,7 @@ static int sffs_write_at(struct sffs *fs, off_t offset, const void *data, size_t
 		return -1;
 	}
 
-	if (fs->write(data, size) != size) {
+	if (fs->write(data, size) != (ssize_t)size) {
 		LOG_ERROR(("SFFS: write(%p, %zu) failed", data, size));
 		return -1;
 	}
@@ -125,7 +125,7 @@ static int sffs_write_metadata(struct sffs *fs, struct sffs_block *block, uint8_
 	uint8_t header2[4 + 1 + 1]; /*timestamp + padding + filename len*/
 	
 	uint32_t size = (uint32_t)(block->end - block->begin - SFFS_HEADER_SIZE);
-	if (block->begin + size > fs->device_size) {
+	if (block->begin + size > (ssize_t)fs->device_size) {
 		LOG_ERROR(("SFFS: cancelling sffs_write_metadata(0x%zx, %02x, %u), do not corrupt filesystem!", block->begin, flags, size));
 		return -1;
 	}
@@ -392,7 +392,7 @@ ssize_t sffs_write(struct sffs *fs, const char *fname, const void *data, size_t 
 	if (sffs_write_metadata(fs, &file->block, 0x40, fname_len, padding) == -1)
 		return -1;
 	/*write filename*/
-	if (fs->write(fname, fname_len) != fname_len) {
+	if (fs->write(fname, fname_len) != (ssize_t)fname_len) {
 		LOG_ERROR(("SFFS: error writing filename (len: %zu)", fname_len));
 		return -1;
 	}
@@ -470,14 +470,14 @@ int sffs_mount(struct sffs *fs) {
 	fs->free.ptr = 0;
 	fs->free.size = 0;
 	
-	while((offset = fs->seek(0, SEEK_CUR)/* tell */) < fs->device_size) {
+	while((offset = fs->seek(0, SEEK_CUR)/* tell */) < (ssize_t)fs->device_size) {
 		struct sffs_block block;
 		
 		unsigned header_off, committed, block_size;
 		uint8_t header[SFFS_HEADER_SIZE];
 
 		block.begin = offset;
-		if (block.begin >= fs->device_size) {
+		if (block.begin >= (ssize_t)fs->device_size) {
 			LOG_ERROR(("SFFS: block crosses device's bounds"));
 			goto error;
 		}
@@ -536,7 +536,7 @@ int sffs_mount(struct sffs *fs) {
 			free = (struct sffs_block *)((char *)fs->free.ptr + free_offset);
 			*free = block;
 			LOG_DEBUG(("SFFS: free space %zu->%zu", block.begin, block.end));
-			if (free->end > fs->device_size)  {
+			if (free->end > (ssize_t)fs->device_size)  {
 				LOG_ERROR(("SFFS: free spaces crosses device bound!"));
 				free->end = fs->device_size;
 				goto error;
@@ -547,7 +547,7 @@ int sffs_mount(struct sffs *fs) {
 			goto error;
 		}
 	}
-	if (offset > fs->device_size) {
+	if (offset > (ssize_t)fs->device_size) {
 		LOG_ERROR(("SFFS: last block crosses device bounds"));
 		goto error;
 	}
