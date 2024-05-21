@@ -12,6 +12,7 @@
 #endif
 
 #define SFFS_HEADER_SIZE (16)
+#define SFFS_SAFE_METADATA_WRITE (0xff)
 
 static int sffs_entry_compare(const void *a, const void *b) {
 	struct sffs_entry *ea = (struct sffs_entry *)a;
@@ -151,11 +152,13 @@ static int sffs_write_metadata(struct sffs *fs, struct sffs_block *block, uint8_
 	
 	/* update timestamp */
 	*((uint32_t *)header2) = htole32(block->mtime);
-	header2[4] = padding;
-	header2[5] = fname_len;
+	if (padding != SFFS_SAFE_METADATA_WRITE) {
+		header2[4] = padding;
+		header2[5] = fname_len;
 
-	if (sffs_write_at(fs, block->begin + 10, header2, 6) == -1)
-		return -1;
+		if (sffs_write_at(fs, block->begin + 10, header2, 6) == -1)
+			return -1;
+	}
 
 	return 0;
 }
@@ -214,7 +217,7 @@ static int sffs_compact(struct sffs *fs) {
 		if (free[i].end == free[j].begin) {
 			free[i].end = free[j].end;
 			free[i].mtime = free[i].mtime > free[j].mtime? free[i].mtime: free[j].mtime;
-			if (sffs_write_metadata(fs, free + i, 0, 0, 0) == -1)
+			if (sffs_write_metadata(fs, free + i, 0, 0, SFFS_SAFE_METADATA_WRITE) == -1)
 				return -1;
 			if (sffs_commit_metadata(fs, free + i) == -1)
 				return -1;
@@ -241,7 +244,7 @@ static int sffs_recover_and_remove_old_files(struct sffs *fs) {
 		if (strcmp(file->name, files[j].name) == 0) {
 			file->block.mtime = timestamp;
 			LOG_INFO(("SFFS: unlinking older file %s@%u vs %u", file->name, (unsigned)file->block.mtime, (unsigned)files[j].block.mtime));
-			if (sffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
+			if (sffs_write_metadata(fs, &file->block, 0, 0, SFFS_SAFE_METADATA_WRITE) == -1)
 				return -1;
 			if (sffs_commit_metadata(fs, &file->block) == -1)
 				return -1;
@@ -261,7 +264,7 @@ static int sffs_unlink_at(struct sffs *fs, size_t pos) {
 	struct sffs_block *free_block;
 	LOG_DEBUG(("SFFS: erasing metadata[%zu]:%s at 0x%zx-0x%zx", pos, file->name, file->block.begin, file->block.end));
 	file->block.mtime = (uint32_t)time(0);
-	if (sffs_write_metadata(fs, &file->block, 0, 0, 0) == -1)
+	if (sffs_write_metadata(fs, &file->block, 0, 0, SFFS_SAFE_METADATA_WRITE) == -1)
 		return -1;
 	if (sffs_commit_metadata(fs, &file->block) == -1)
 		return -1;
